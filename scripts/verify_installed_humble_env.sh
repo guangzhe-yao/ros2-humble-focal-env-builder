@@ -8,7 +8,10 @@ if [ ! -f "$INSTALL_PREFIX/setup.bash" ]; then
   exit 1
 fi
 
+set +u
+# shellcheck disable=SC1090
 source "$INSTALL_PREFIX/setup.bash"
+set -u
 
 echo "ROS prefix: $INSTALL_PREFIX"
 echo "ROS_DISTRO=${ROS_DISTRO:-}"
@@ -31,4 +34,3 @@ if ros2 pkg list | grep -qx ros2controlcli; then
 fi
 
 echo "Installed Humble environment smoke check passed."
-

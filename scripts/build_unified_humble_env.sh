@@ -25,6 +25,13 @@ log() {
   printf '[%s] %s\n' "$(date +%H:%M:%S)" "$*"
 }
 
+source_ros_setup() {
+  set +u
+  # shellcheck disable=SC1090
+  source "$1"
+  set -u
+}
+
 require_focal_amd64() {
   . /etc/os-release
   if [ "${VERSION_CODENAME:-}" != "focal" ]; then
@@ -59,6 +66,14 @@ configure_rosdep_network() {
   mirror_hostpath="${mirror_hostpath#http://}"
 
   if [ "$mode" = "0" ] || [ "$mode" = "false" ]; then
+    return 0
+  fi
+  if [ -f "$default_list" ] &&
+     grep -Fq "$mirror/rosdep/base.yaml" "$default_list" &&
+     [ -f "$index_url_file" ]; then
+    export ROSDISTRO_INDEX_URL
+    ROSDISTRO_INDEX_URL="$(head -n 1 "$index_url_file")"
+    log "Using existing rosdep mirror configuration: $ROSDISTRO_INDEX_URL"
     return 0
   fi
   if [ "$mode" = "auto" ] && curl -fsSL --connect-timeout 5 --max-time 8 "$raw_probe" >/dev/null 2>&1; then
@@ -144,14 +159,14 @@ check_duplicate_packages() {
 
 install_dependencies() {
   log "Installing rosdep dependencies"
-  source "$UNIFIED_PREFIX/setup.bash"
+  source_ros_setup "$UNIFIED_PREFIX/setup.bash"
   rosdep update
   rosdep install --from-paths "$SRC_DIR" --ignore-src -y --os=ubuntu:focal --rosdistro humble
 }
 
 build_overlay_into_unified_prefix() {
   log "Building third-party overlay into $UNIFIED_PREFIX"
-  source "$UNIFIED_PREFIX/setup.bash"
+  source_ros_setup "$UNIFIED_PREFIX/setup.bash"
   export PATH="$HOME/.local/bin:$PATH"
   cd "$WORK_DIR"
 
@@ -168,7 +183,7 @@ build_overlay_into_unified_prefix() {
 
 verify_unified_prefix() {
   log "Running smoke checks"
-  source "$UNIFIED_PREFIX/setup.bash"
+  source_ros_setup "$UNIFIED_PREFIX/setup.bash"
   ros2 pkg prefix rclcpp >/dev/null
   ros2 pkg prefix rviz2 >/dev/null
 
