@@ -112,6 +112,22 @@ ensure_new_cmake() {
   cmake --version | head -n 1
 }
 
+update_rosdep_cache() {
+  if rosdep update; then
+    return 0
+  fi
+
+  echo "Warning: rosdep update reported a partial network failure; validating the resulting cache." >&2
+  if rosdep resolve cmake --rosdistro humble --os=ubuntu:focal >/dev/null 2>&1 &&
+     rosdep resolve rclcpp --rosdistro humble --os=ubuntu:focal >/dev/null 2>&1; then
+    echo "rosdep cache is usable; continuing after partial update failure." >&2
+    return 0
+  fi
+
+  echo "rosdep cache is not usable after update failure." >&2
+  return 1
+}
+
 prepare_workspace() {
   if [ ! -f "$BASE_PREFIX/setup.bash" ]; then
     echo "Missing base ROS install space: $BASE_PREFIX/setup.bash" >&2
@@ -160,7 +176,7 @@ check_duplicate_packages() {
 install_dependencies() {
   log "Installing rosdep dependencies"
   source_ros_setup "$UNIFIED_PREFIX/setup.bash"
-  rosdep update
+  update_rosdep_cache
   rosdep install --from-paths "$SRC_DIR" --ignore-src -y --os=ubuntu:focal --rosdistro humble
 }
 
