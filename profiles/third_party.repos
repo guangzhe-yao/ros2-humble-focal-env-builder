@@ -1,0 +1,70 @@
+# Unified third-party ROS 2 Humble source dependencies for Ubuntu 20.04 focal.
+#
+# Prefer pinning version fields to commit SHAs before release builds. Branch names
+# are convenient while evaluating a package set, but they make rebuilds drift.
+repositories:
+  ackermann_msgs:
+    type: git
+    url: https://github.com/ros-drivers/ackermann_msgs.git
+    version: ros2
+  angles:
+    type: git
+    url: https://github.com/ros/angles.git
+    version: humble-devel
+  backward_ros:
+    type: git
+    url: https://github.com/pal-robotics/backward_ros.git
+    version: foxy-devel
+  control_msgs:
+    type: git
+    url: https://github.com/ros-controls/control_msgs.git
+    version: humble
+  control_toolbox:
+    type: git
+    url: https://github.com/ros-controls/control_toolbox.git
+    version: humble
+  cpp_polyfills:
+    type: git
+    url: https://github.com/PickNikRobotics/cpp_polyfills.git
+    version: humble
+  filters:
+    type: git
+    url: https://github.com/ros/filters.git
+    version: ros2
+  generate_parameter_library:
+    type: git
+    url: https://github.com/PickNikRobotics/generate_parameter_library.git
+    version: humble
+  joint_state_publisher:
+    type: git
+    url: https://github.com/ros/joint_state_publisher.git
+    version: humble
+  kinematics_interface:
+    type: git
+    url: https://github.com/ros-controls/kinematics_interface.git
+    version: humble
+  realtime_tools:
+    type: git
+    url: https://github.com/ros-controls/realtime_tools.git
+    version: humble
+  ros2_control:
+    type: git
+    url: https://github.com/ros-controls/ros2_control.git
+    version: humble
+  ros2_control_cmake:
+    type: git
+    url: https://github.com/ros-controls/ros2_control_cmake.git
+    version: master
+  ros2_controllers:
+    type: git
+    url: https://github.com/ros-controls/ros2_controllers.git
+    version: humble
+  RSL:
+    type: git
+    url: https://github.com/PickNikRobotics/RSL.git
+    version: main
+  xacro:
+    type: git
+    url: https://github.com/ros/xacro.git
+    version: ros2
+

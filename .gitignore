@@ -1,0 +1,14 @@
+build/
+log/
+install_deploy/
+package_out/
+artifacts/
+*.deb
+*.deb.contents
+*.deb.info
+*.tar.gz
+*.log
+*.tmp
+__pycache__/
+*.pyc
+
