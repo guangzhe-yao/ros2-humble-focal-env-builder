@@ -11,6 +11,8 @@ when module teams add third-party ROS dependencies.
 ## Repository Contents
 
 - `profiles/third_party.repos`: curated third-party source manifest.
+- `profiles/third_party.lock.repos`: exact commits from the latest verified
+  unified build.
 - `scripts/build_unified_humble_env.sh`: import sources, run rosdep, build with
   colcon, verify, and produce deploy artifacts.
 - `scripts/verify_installed_humble_env.sh`: smoke check for a deployed machine.
@@ -52,6 +54,14 @@ PKG_VERSION="0.2.0+$(date +%Y%m%d%H%M)" \
 BASE_PREFIX="$HOME/ros2_humble/install_deploy" \
 WORK_DIR="$HOME/ros2_humble_unified" \
 PROFILE="$PWD/profiles/third_party.repos" \
+./scripts/build_unified_humble_env.sh
+```
+
+For a reproducible rebuild of the currently verified package set, use:
+
+```bash
+PROFILE="$PWD/profiles/third_party.lock.repos" \
+PKG_VERSION="0.2.0+$(date +%Y%m%d%H%M)" \
 ./scripts/build_unified_humble_env.sh
 ```
 
@@ -113,14 +123,11 @@ sudo ./install_ros2_humble.sh
 
 ## How To Add More Third-Party Packages
 
-1. Add the repository to `profiles/third_party.repos`.
-2. Add any ROS source dependencies that do not exist in the base bundle.
-3. Build once with branch names while evaluating.
-4. Before release, pin `version` fields to commit SHAs or keep the generated
-   `source-lock.repos` with the release artifact.
-5. Run `scripts/build_unified_humble_env.sh`.
-6. Verify important packages with `ros2 pkg prefix <name>` and module smoke
-   tests.
+See `docs/adding-third-party-packages.md` for the tested end-to-end workflow.
+
+In short: update `profiles/third_party.repos`, include missing ROS source
+dependencies, build and test, then promote the generated `source-lock.repos` to
+`profiles/third_party.lock.repos`.
 
 ## Notes
 

@@ -1,0 +1,65 @@
+repositories:
+  RSL:
+    type: git
+    url: https://github.com/PickNikRobotics/RSL.git
+    version: 085faba0720dda2e53de3ab9d4e5e164d37d34ea
+  ackermann_msgs:
+    type: git
+    url: https://github.com/ros-drivers/ackermann_msgs.git
+    version: 81a5f2d9ae1c1048216678b9dc3db6afc0cb815e
+  angles:
+    type: git
+    url: https://github.com/ros/angles.git
+    version: 4b71a44dd2b3a24d7af30bf94b0ba34ece1d0558
+  backward_ros:
+    type: git
+    url: https://github.com/pal-robotics/backward_ros.git
+    version: 3c71c9f184223f885459ad67a223eb36a5ca347f
+  control_msgs:
+    type: git
+    url: https://github.com/ros-controls/control_msgs.git
+    version: 2931c5e408d6d6eb5921451bdb845b32925bc4a3
+  control_toolbox:
+    type: git
+    url: https://github.com/ros-controls/control_toolbox.git
+    version: 7d4245e6aa55967cb3e79e66bf56a749d862b7dd
+  cpp_polyfills:
+    type: git
+    url: https://github.com/PickNikRobotics/cpp_polyfills.git
+    version: 51944c6d8278ce3f92a3f191af38f0e783bf4406
+  filters:
+    type: git
+    url: https://github.com/ros/filters.git
+    version: ef8bad440cb65a54874dbaa8bf39b3acc2c03268
+  generate_parameter_library:
+    type: git
+    url: https://github.com/PickNikRobotics/generate_parameter_library.git
+    version: 602368b011cfc859bb61281326444b4795bc06bd
+  joint_state_publisher:
+    type: git
+    url: https://github.com/ros/joint_state_publisher.git
+    version: bbcac1ebfc43f920ed0b5e17d75cdc674c4229e6
+  kinematics_interface:
+    type: git
+    url: https://github.com/ros-controls/kinematics_interface.git
+    version: fbdfda5fe5371a76bb3c2ad7db3184b4aee52e0a
+  realtime_tools:
+    type: git
+    url: https://github.com/ros-controls/realtime_tools.git
+    version: a3319941d1ccadce4bbb5d70ad29ffd4a7e81be9
+  ros2_control:
+    type: git
+    url: https://github.com/ros-controls/ros2_control.git
+    version: c5a68cf1f834f99705619c440f04ef0f70fc0f70
+  ros2_control_cmake:
+    type: git
+    url: https://github.com/ros-controls/ros2_control_cmake.git
+    version: 4c0249e54388aa625eba147f46e9b497fe72926b
+  ros2_controllers:
+    type: git
+    url: https://github.com/ros-controls/ros2_controllers.git
+    version: 24697b87026e090f93ba9afbd1a07b7bdbecbef4
+  xacro:
+    type: git
+    url: https://github.com/ros/xacro.git
+    version: da4b3849f8320903d625250089f67f0632be86f2
