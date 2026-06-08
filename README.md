@@ -1,5 +1,7 @@
 # ROS 2 Humble Focal Environment Builder
 
+[English](README.md) | [简体中文](README.zh-CN.md)
+
 This repository manages the repeatable build flow for a source-built ROS 2
 Humble desktop environment on Ubuntu 20.04 focal amd64, with curated third-party
 ROS packages merged into the same deployable `/opt/ros/humble` bundle.
