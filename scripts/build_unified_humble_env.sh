@@ -203,8 +203,7 @@ verify_unified_prefix() {
   ros2 pkg prefix rclcpp >/dev/null
   ros2 pkg prefix rviz2 >/dev/null
 
-  if ros2 pkg list | grep -qx controller_manager; then
-    ros2 pkg prefix controller_manager >/dev/null
+  if ros2 pkg prefix controller_manager >/dev/null 2>&1; then
     ros2 control --help >/dev/null
   fi
 
