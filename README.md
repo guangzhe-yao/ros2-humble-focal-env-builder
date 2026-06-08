@@ -18,6 +18,10 @@ when module teams add third-party ROS dependencies.
 - `scripts/verify_installed_humble_env.sh`: smoke check for a deployed machine.
 - `packaging/build_ros2_humble_bundle.sh`: Debian bundle and marker generator.
 - `docs/risks-and-mitigations.md`: known risks and how to reduce them.
+- `docs/focal-build-host-network.md`: tested NetworkManager settings for the
+  focal build host.
+- `tests/controller_interface_smoke`: custom `controller_interface` plugin smoke
+  test used after installing the unified bundle.
 
 Generated debs, build logs, and install spaces are intentionally ignored by Git.
 
