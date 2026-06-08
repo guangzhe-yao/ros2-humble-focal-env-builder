@@ -55,6 +55,19 @@ PROFILE="$PWD/profiles/third_party.repos" \
 ./scripts/build_unified_humble_env.sh
 ```
 
+If the focal build machine cannot access GitHub, prepare a source cache on a
+machine with GitHub access and copy it to the build machine. Then run:
+
+```bash
+SOURCE_CACHE_DIR="$HOME/ros2_humble_source_cache" \
+PKG_VERSION="0.2.0+$(date +%Y%m%d%H%M)" \
+./scripts/build_unified_humble_env.sh
+```
+
+The cache directory must contain exactly the repositories represented by the
+selected profile. The generated `source-lock.repos` records their actual commit
+SHAs.
+
 Artifacts will be written to:
 
 ```text
@@ -72,6 +85,7 @@ The artifact directory contains:
 - `dev-deps.txt`
 - `third_party.repos`
 - `source-lock.repos`
+- `verify_installed_humble_env.sh`
 
 ## Deploy
 

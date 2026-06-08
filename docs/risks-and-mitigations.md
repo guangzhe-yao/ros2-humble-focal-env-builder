@@ -32,6 +32,10 @@ may not be identical to today's rebuild.
 Mitigation: before release, replace branch names in `profiles/*.repos` with
 commit SHAs or keep the generated `source-lock.repos` with the artifact.
 
+If the build host cannot access GitHub, create a source cache on another machine,
+copy it to the focal build host, and set `SOURCE_CACHE_DIR`. Keep the cache
+contents aligned with the selected profile.
+
 4. Missing ROS source dependencies on focal
 
 Humble upstream rosdep maps most ROS packages to Ubuntu 22.04 jammy. On focal,
@@ -106,4 +110,3 @@ environment if all of the following are true:
 
 This is suitable for controlled internal machines. It is not a general-purpose
 replacement for official ROS 2 Humble on Ubuntu 22.04.
-

@@ -6,6 +6,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BASE_PREFIX="${BASE_PREFIX:-$HOME/ros2_humble/install_deploy}"
 WORK_DIR="${WORK_DIR:-$HOME/ros2_humble_unified}"
 PROFILE="${PROFILE:-$REPO_ROOT/profiles/third_party.repos}"
+SOURCE_CACHE_DIR="${SOURCE_CACHE_DIR:-}"
 SRC_DIR="${SRC_DIR:-$WORK_DIR/src}"
 UNIFIED_PREFIX="${UNIFIED_PREFIX:-$WORK_DIR/install_deploy}"
 BUILD_DIR="${BUILD_DIR:-$WORK_DIR/build}"
@@ -116,8 +117,17 @@ prepare_workspace() {
 }
 
 import_sources() {
-  log "Importing third-party sources from $PROFILE"
-  vcs import "$SRC_DIR" < "$PROFILE"
+  if [ -n "$SOURCE_CACHE_DIR" ]; then
+    if [ ! -d "$SOURCE_CACHE_DIR" ]; then
+      echo "Missing source cache directory: $SOURCE_CACHE_DIR" >&2
+      exit 1
+    fi
+    log "Copying third-party sources from cache: $SOURCE_CACHE_DIR"
+    rsync -a --delete "$SOURCE_CACHE_DIR/" "$SRC_DIR/"
+  else
+    log "Importing third-party sources from $PROFILE"
+    vcs import "$SRC_DIR" < "$PROFILE"
+  fi
   vcs export --exact "$SRC_DIR" > "$OUT_DIR/source-lock.repos"
 }
 
@@ -147,12 +157,11 @@ build_overlay_into_unified_prefix() {
 
   # Intentionally no --symlink-install: release artifacts must not contain links
   # back to the transient source or build directories.
-  colcon build \
+  colcon --log-base "$LOG_DIR" build \
     --merge-install \
     --base-paths "$SRC_DIR" \
     --install-base "$UNIFIED_PREFIX" \
     --build-base "$BUILD_DIR" \
-    --log-base "$LOG_DIR" \
     --cmake-args -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF \
     $COLCON_PACKAGES_ARGS
 }
