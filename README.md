@@ -76,13 +76,15 @@ machine with GitHub access and copy it to the build machine. Then run:
 
 ```bash
 SOURCE_CACHE_DIR="$HOME/ros2_humble_source_cache" \
+COLCON_CMAKE_ARGS="-DCMAKE_DISABLE_FIND_PACKAGE_Doxygen=TRUE" \
 PKG_VERSION="0.2.0+$(date +%Y%m%d%H%M)" \
 ./scripts/build_unified_humble_env.sh
 ```
 
 The cache directory must contain exactly the repositories represented by the
 selected profile. The generated `source-lock.repos` records their actual commit
-SHAs.
+SHAs. Disabling Doxygen also prevents RSL's documentation target from
+downloading a CSS file during an otherwise offline build.
 
 Artifacts will be written to:
 

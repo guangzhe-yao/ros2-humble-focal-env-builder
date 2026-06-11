@@ -19,6 +19,7 @@ BUILD_BASE="${BUILD_BASE:-$HOME/ros2_humble/build_deploy}"
 ROSDEP_USE_MIRROR="${ROSDEP_USE_MIRROR:-auto}"
 ROSDEP_ROSDISTRO_MIRROR="${ROSDEP_ROSDISTRO_MIRROR:-https://mirrors.ustc.edu.cn/rosdistro}"
 COLCON_PACKAGES_ARGS="${COLCON_PACKAGES_ARGS:-}"
+COLCON_CMAKE_ARGS="${COLCON_CMAKE_ARGS:-}"
 AMENT_PREFIX_PATH="${AMENT_PREFIX_PATH:-}"
 
 log() {
@@ -194,6 +195,7 @@ build_overlay_into_unified_prefix() {
     --install-base "$UNIFIED_PREFIX" \
     --build-base "$BUILD_DIR" \
     --cmake-args -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF \
+    $COLCON_CMAKE_ARGS \
     $COLCON_PACKAGES_ARGS
 }
 

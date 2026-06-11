@@ -15,16 +15,17 @@
 
 ## 当前验证状态
 
-已在 `nav01@172.16.11.164` 实机完成：
+已在 `nav01@172.16.11.164` 和 `nav01@172.16.10.11` 实机完成：
 
 - ROS 2 Humble Desktop 基础环境安装。
-- 16 个第三方源码仓库汇总构建。
-- 58 个第三方 ROS 包编译成功。
-- 最终环境包含 387 个 ROS 包。
-- 生成 387 个对应的 `ros-humble-*` marker deb。
+- 18 个第三方源码仓库锁定和离线缓存构建。
+- 70 个第三方 ROS 包编译成功。
+- 最终环境包含 399 个 ROS 包。
+- 生成 399 个对应的 `ros-humble-*` marker deb。
 - 自定义功能包依赖并使用 `controller_interface` 编译成功。
 - 自定义 Controller 插件通过 pluginlib 动态加载。
 - `auto_declare()`、接口配置和 `update()` 调用正常。
+- Foxy lowerlimb 项目迁移后 9 个包完成干净构建，单测和插件发现通过。
 
 ## 仓库结构
 
@@ -226,12 +227,16 @@ git pull
 export PATH="$HOME/.local/bin:$PATH"
 
 SOURCE_CACHE_DIR="$HOME/ros2_humble_source_cache" \
+COLCON_CMAKE_ARGS="-DCMAKE_DISABLE_FIND_PACKAGE_Doxygen=TRUE" \
 PROFILE="$PWD/profiles/third_party.repos" \
 BASE_PREFIX="$HOME/ros2_humble/install_deploy" \
 WORK_DIR="$HOME/ros2_humble_unified" \
 PKG_VERSION="0.3.0+$(date +%Y%m%d%H%M)" \
 ./scripts/build_unified_humble_env.sh
 ```
+
+禁用 Doxygen 可避免 RSL 在生成文档时隐式访问 GitHub 下载 CSS；源码缓存
+构建因此不依赖 GitHub 在线状态。
 
 产物目录：
 
@@ -313,4 +318,3 @@ PKG_VERSION="0.2.0+$(date +%Y%m%d%H%M)" \
 Humble apt 环境。正式发布前请阅读：
 
 [风险和规避方案](docs/risks-and-mitigations.md)
-

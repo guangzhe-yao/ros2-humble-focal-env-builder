@@ -27,6 +27,10 @@ repositories:
     type: git
     url: https://github.com/PickNikRobotics/cpp_polyfills.git
     version: 51944c6d8278ce3f92a3f191af38f0e783bf4406
+  diagnostics:
+    type: git
+    url: https://github.com/ros/diagnostics.git
+    version: cc41f0ae61fcc07660bf92f3670f48aaa529f36e
   filters:
     type: git
     url: https://github.com/ros/filters.git
@@ -39,6 +43,10 @@ repositories:
     type: git
     url: https://github.com/ros/joint_state_publisher.git
     version: bbcac1ebfc43f920ed0b5e17d75cdc674c4229e6
+  joystick_drivers:
+    type: git
+    url: https://github.com/ros-drivers/joystick_drivers.git
+    version: 038a12722bac3983d7fee462ad074a8f18c7bd5f
   kinematics_interface:
     type: git
     url: https://github.com/ros-controls/kinematics_interface.git
