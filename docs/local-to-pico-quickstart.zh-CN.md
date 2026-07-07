@@ -211,6 +211,20 @@ orin_pico_cyclonedds/
 这份 `artifacts/` 后续可以复制到其他新 Pico 上安装，不需要每台 Pico 都重新
 源码编译。
 
+如果要完全降低网络依赖，建议在已经构建成功的稳定 Pico 上继续打离线包：
+
+```bash
+ARTIFACT_DIR=~/ros2_humble_unified/package_out/artifacts \
+./packaging/build_offline_humble_bundle.sh
+```
+
+生成的 `offline/ros2-humble-focal-offline-bundle_*.tar.gz` 可以直接复制到
+其他 Pico 离线安装。详细流程见：
+
+```text
+docs/offline-pico-deploy.zh-CN.md
+```
+
 其他 Pico 只要执行：
 
 ```bash

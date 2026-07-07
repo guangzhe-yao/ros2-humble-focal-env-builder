@@ -367,6 +367,8 @@ ROSDEP_RULES="\$SCRIPT_DIR/$ROSDEP_RULES_BASENAME"
 INSTALL_PREFIX="$INSTALL_PREFIX"
 ROSDEP_INDEX_URL_FILE="/etc/ros/rosdep/rosdistro_index_url"
 DDS_ASSET_DIR="\$SCRIPT_DIR/orin_pico_cyclonedds"
+INSTALL_APT_DEPS="\${INSTALL_APT_DEPS:-1}"
+RUN_ROSDEP_UPDATE="\${RUN_ROSDEP_UPDATE:-1}"
 
 configure_rosdep_network() {
   local mode="\${ROSDEP_USE_MIRROR:-auto}"
@@ -434,7 +436,7 @@ install_rosdep_rules() {
   cat > /etc/ros/rosdep/sources.list.d/50-ros2-humble-focal-source-build.list <<'RULEEOF'
 yaml file:///etc/ros/rosdep/$ROSDEP_RULES_BASENAME
 RULEEOF
-  if command -v rosdep >/dev/null 2>&1; then
+  if [ "\$RUN_ROSDEP_UPDATE" != "0" ] && command -v rosdep >/dev/null 2>&1; then
     run_rosdep_update
   fi
 }
@@ -555,29 +557,33 @@ if [ -e "\$INSTALL_PREFIX" ] && [ -n "\$(find "\$INSTALL_PREFIX" -mindepth 1 -ma
   exit 1
 fi
 
-apt-get update
-apt-get install -y \$(tr '\n' ' ' < "\$SCRIPT_DIR/runtime-deps.txt")
+if [ "\$INSTALL_APT_DEPS" != "0" ]; then
+  apt-get update
+  apt-get install -y \$(tr '\n' ' ' < "\$SCRIPT_DIR/runtime-deps.txt")
 
-if [ -f "\$SCRIPT_DIR/dev-deps.txt" ]; then
-  dev_install=()
-  dev_missing=()
-  while IFS= read -r pkg; do
-    [ -z "\$pkg" ] && continue
-    if apt-cache show "\$pkg" >/dev/null 2>&1; then
-      dev_install+=("\$pkg")
-    else
-      dev_missing+=("\$pkg")
+  if [ -f "\$SCRIPT_DIR/dev-deps.txt" ]; then
+    dev_install=()
+    dev_missing=()
+    while IFS= read -r pkg; do
+      [ -z "\$pkg" ] && continue
+      if apt-cache show "\$pkg" >/dev/null 2>&1; then
+        dev_install+=("\$pkg")
+      else
+        dev_missing+=("\$pkg")
+      fi
+    done < "\$SCRIPT_DIR/dev-deps.txt"
+
+    if [ "\${#dev_install[@]}" -gt 0 ]; then
+      apt-get install -y "\${dev_install[@]}"
     fi
-  done < "\$SCRIPT_DIR/dev-deps.txt"
-
-  if [ "\${#dev_install[@]}" -gt 0 ]; then
-    apt-get install -y "\${dev_install[@]}"
+    if [ "\${#dev_missing[@]}" -gt 0 ]; then
+      echo "Some optional overlay build packages are not visible in apt:" >&2
+      printf '  %s\n' "\${dev_missing[@]}" >&2
+      echo "Runtime install continues; install the missing tools separately before building overlay packages." >&2
+    fi
   fi
-  if [ "\${#dev_missing[@]}" -gt 0 ]; then
-    echo "Some optional overlay build packages are not visible in apt:" >&2
-    printf '  %s\n' "\${dev_missing[@]}" >&2
-    echo "Runtime install continues; install the missing tools separately before building overlay packages." >&2
-  fi
+else
+  echo "INSTALL_APT_DEPS=0: skipping apt runtime/dev dependency installation."
 fi
 install_user_cmake_for_overlay
 

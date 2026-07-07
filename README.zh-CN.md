@@ -39,12 +39,18 @@
 - `scripts/build_unified_humble_env.sh`：完整汇总构建和出包脚本。
 - `scripts/verify_installed_humble_env.sh`：部署后的环境检查脚本。
 - `packaging/build_ros2_humble_bundle.sh`：主 deb、marker 和安装器生成脚本。
+- `packaging/build_offline_humble_bundle.sh`：把已验证 artifacts 和 apt 依赖
+  打成可复制到其他 Pico 的离线安装包。
+- `packaging/repackage_existing_humble_artifacts.sh`：稳定 Pico 已经有
+  `~/ros2_humble_unified/install_deploy` 时，不重新源码构建，只重新生成当前
+  仓库版本的 artifacts/离线包。
 - `tests/controller_interface_smoke`：自定义 Controller 插件编译和加载测试。
 - `docs/adding-third-party-packages.md`：新增第三方包的完整操作流程。
 - `docs/risks-and-mitigations.md`：风险和规避方案。
 - `docs/focal-build-host-network.md`：实机构建网络配置。
 - `docs/new-pico-repeatable-deploy.md`：新 Pico 机器可重复安装 Humble
   前置环境的闭环。
+- `docs/offline-pico-deploy.zh-CN.md`：稳定 Pico 打离线包、其他 Pico 离线安装流程。
 - `docs/local-to-pico-quickstart.zh-CN.md`：一台新 Pico 从 0 安装
   Humble 前置环境的最短操作路径。
 - `docs/end-to-end-workflow.zh-CN.md`：从本地开发机、Focal 构建机到

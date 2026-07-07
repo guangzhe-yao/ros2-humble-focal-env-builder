@@ -23,6 +23,7 @@ ROSDEP_SKIP_KEYS="${ROSDEP_SKIP_KEYS:-fastcdr rti-connext-dds-6.0.1 urdfdom_head
 COLCON_PACKAGES_ARGS="${COLCON_PACKAGES_ARGS:-}"
 COLCON_CMAKE_ARGS="${COLCON_CMAKE_ARGS:-}"
 AMENT_PREFIX_PATH="${AMENT_PREFIX_PATH:-}"
+BUILD_OFFLINE_BUNDLE="${BUILD_OFFLINE_BUNDLE:-0}"
 
 log() {
   printf '[%s] %s\n' "$(date +%H:%M:%S)" "$*"
@@ -255,6 +256,12 @@ package_unified_prefix() {
       --exclude '*.pyc' \
       "$REPO_ROOT/deploy/orin_pico_cyclonedds/" \
       "$OUT_DIR/artifacts/orin_pico_cyclonedds/"
+  fi
+
+  if [ "$BUILD_OFFLINE_BUNDLE" = "1" ]; then
+    log "Building offline deploy bundle"
+    ARTIFACT_DIR="$OUT_DIR/artifacts" \
+      "$REPO_ROOT/packaging/build_offline_humble_bundle.sh"
   fi
 }
 
