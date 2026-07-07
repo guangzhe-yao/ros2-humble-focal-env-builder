@@ -366,6 +366,7 @@ MARKERS_TAR="\$SCRIPT_DIR/$marker_tar_name"
 ROSDEP_RULES="\$SCRIPT_DIR/$ROSDEP_RULES_BASENAME"
 INSTALL_PREFIX="$INSTALL_PREFIX"
 ROSDEP_INDEX_URL_FILE="/etc/ros/rosdep/rosdistro_index_url"
+DDS_ASSET_DIR="\$SCRIPT_DIR/orin_pico_cyclonedds"
 
 configure_rosdep_network() {
   local mode="\${ROSDEP_USE_MIRROR:-auto}"
@@ -436,6 +437,49 @@ RULEEOF
   if command -v rosdep >/dev/null 2>&1; then
     run_rosdep_update
   fi
+}
+
+install_pico_cyclonedds_assets() {
+  if [ ! -d "\$DDS_ASSET_DIR" ]; then
+    return 0
+  fi
+
+  echo "Installing Pico CycloneDDS deployment assets from \$DDS_ASSET_DIR"
+  mkdir -p /etc/ros/cyclonedds /etc/ros /opt/zj_humanoid/tools
+
+  if [ -f "\$DDS_ASSET_DIR/pico-cyclonedds.xml" ]; then
+    install -m 0644 "\$DDS_ASSET_DIR/pico-cyclonedds.xml" /etc/ros/cyclonedds/pico-cyclonedds.xml
+  fi
+  if [ -f "\$DDS_ASSET_DIR/10-ros2-dds.conf" ]; then
+    install -m 0644 "\$DDS_ASSET_DIR/10-ros2-dds.conf" /etc/sysctl.d/10-ros2-dds.conf
+    sysctl --system || true
+  fi
+  if [ -f "\$DDS_ASSET_DIR/ros2_link_test.py" ]; then
+    install -m 0755 "\$DDS_ASSET_DIR/ros2_link_test.py" /opt/zj_humanoid/tools/ros2_link_test.py
+  fi
+  if [ -f "\$DDS_ASSET_DIR/source_ros2_humble_clean.bash" ]; then
+    install -m 0644 "\$DDS_ASSET_DIR/source_ros2_humble_clean.bash" /etc/ros/source_ros2_humble_clean.bash
+    install -m 0644 "\$DDS_ASSET_DIR/source_ros2_humble_clean.bash" /opt/zj_humanoid/tools/source_ros2_humble_clean.bash
+  fi
+
+  cat > /etc/ros/ros2_humble_cyclone.env <<'ENVEOF'
+ROS_DOMAIN_ID=20
+ROS_LOCALHOST_ONLY=0
+RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+CYCLONEDDS_URI=file:///etc/ros/cyclonedds/pico-cyclonedds.xml
+ENVEOF
+
+  cat > /etc/profile.d/ros2_humble_cyclone.sh <<'PROFILEEOF'
+# ROS 2 Humble DDS defaults for ZJ Humanoid Pico.
+# This file intentionally exports only DDS/RMW variables. Startup scripts should
+# source /opt/ros/humble/setup.bash explicitly before launching ROS 2 nodes.
+export ROS_DOMAIN_ID="\${ROS_DOMAIN_ID:-20}"
+export ROS_LOCALHOST_ONLY="\${ROS_LOCALHOST_ONLY:-0}"
+export RMW_IMPLEMENTATION="\${RMW_IMPLEMENTATION:-rmw_cyclonedds_cpp}"
+export CYCLONEDDS_URI="\${CYCLONEDDS_URI:-file:///etc/ros/cyclonedds/pico-cyclonedds.xml}"
+PROFILEEOF
+
+  chmod 0644 /etc/ros/ros2_humble_cyclone.env /etc/profile.d/ros2_humble_cyclone.sh
 }
 
 cmake_version_for_user() {
@@ -546,6 +590,7 @@ if [ -f "\$MARKERS_TAR" ]; then
   dpkg -i "\$marker_tmp"/*/*.deb || apt-get -f install -y
 fi
 install_rosdep_rules
+install_pico_cyclonedds_assets
 
 cat <<MSG
 
@@ -553,6 +598,7 @@ ROS 2 Humble installed at \$INSTALL_PREFIX
 
 Use:
   source \$INSTALL_PREFIX/setup.bash
+  source /etc/profile.d/ros2_humble_cyclone.sh
 
 For overlay workspaces:
   source \$INSTALL_PREFIX/setup.bash
@@ -689,21 +735,37 @@ Built from source on Ubuntu 20.04 amd64.
 - \`dev-deps.txt\`: optional overlay build tool dependency package list
 - \`install_ros2_humble.sh\`: guarded installer for clean machines
 - \`install_ros2_humble_markers.sh\`: marker-only installer for a machine where the main bundle is already installed
+- \`orin_pico_cyclonedds/\`: fixed Orin/Pico CycloneDDS XML, DDS sysctl tuning, and link-test tool
 
 ## Install
 
 \`\`\`bash
 sudo ./install_ros2_humble.sh
 source $INSTALL_PREFIX/setup.bash
+source /etc/profile.d/ros2_humble_cyclone.sh
 \`\`\`
 
 The installer refuses to run if existing \`ros-humble-*\` Debian packages or a
 non-empty \`$INSTALL_PREFIX\` are present.
 
+When \`orin_pico_cyclonedds/\` is present, the installer also writes:
+
+\`\`\`text
+/etc/ros/cyclonedds/pico-cyclonedds.xml
+/etc/ros/ros2_humble_cyclone.env
+/etc/ros/source_ros2_humble_clean.bash
+/etc/profile.d/ros2_humble_cyclone.sh
+/etc/sysctl.d/10-ros2-dds.conf
+/opt/zj_humanoid/tools/ros2_link_test.py
+/opt/zj_humanoid/tools/source_ros2_humble_clean.bash
+\`\`\`
+
 ## Validate
 
 \`\`\`bash
 source $INSTALL_PREFIX/setup.bash
+source /etc/profile.d/ros2_humble_cyclone.sh
+./verify_installed_humble_env.sh
 ros2 pkg prefix rviz2
 ros2 run demo_nodes_cpp talker
 \`\`\`

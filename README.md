@@ -15,6 +15,12 @@ when module teams add third-party ROS dependencies.
 - `profiles/third_party.repos`: curated third-party source manifest.
 - `profiles/third_party.lock.repos`: exact commits from the latest verified
   unified build.
+- `profiles/ros2_humble.repos`: upstream ROS 2 Humble source manifest used by
+  the clean-machine bootstrap.
+- `scripts/bootstrap_humble_focal_env.sh`: bootstrap a clean Pico/focal amd64
+  machine from source, then build artifacts and install `/opt/ros/humble`.
+- `scripts/bootstrap_pico_humble_env.sh`: Pico entrypoint with the validated
+  GitHub proxy and 2-worker defaults, then delegates to the generic bootstrap.
 - `scripts/build_unified_humble_env.sh`: import sources, run rosdep, build with
   colcon, verify, and produce deploy artifacts.
 - `scripts/verify_installed_humble_env.sh`: smoke check for a deployed machine.
@@ -22,10 +28,41 @@ when module teams add third-party ROS dependencies.
 - `docs/risks-and-mitigations.md`: known risks and how to reduce them.
 - `docs/focal-build-host-network.md`: tested NetworkManager settings for the
   focal build host.
+- `docs/new-pico-repeatable-deploy.md`: repeatable clean-Pico install loop for
+  the Humble prerequisite environment.
+- `docs/end-to-end-workflow.zh-CN.md`: Chinese end-to-end workflow from a local
+  non-ROS development machine to the Focal builder and Pico/Orin targets.
+- `deploy/orin_pico_cyclonedds`: CycloneDDS config, Orin Docker startup, and
+  topic/service/action smoke tests for the fixed Orin/Pico wired topology.
 - `tests/controller_interface_smoke`: custom `controller_interface` plugin smoke
   test used after installing the unified bundle.
 
 Generated debs, build logs, and install spaces are intentionally ignored by Git.
+
+## Orin/Pico Multi-Machine DDS
+
+The current fixed robot topology is:
+
+- Orin wired IP: `192.168.217.100`
+- Pico wired IP: `192.168.217.66`
+- Orin Humble image:
+  `10.51.33.201:30002/navi_project/sensor:22CUDA_humble`
+- RMW: `rmw_cyclonedds_cpp`
+- Discovery: multicast disabled, static unicast peers.
+
+See:
+
+```text
+deploy/orin_pico_cyclonedds/README.zh-CN.md
+```
+
+The included smoke test validates topics, services, and actions in both
+directions. RMW selection is per process, so already-running ROS 2 nodes must be
+restarted with the CycloneDDS environment to join this topology.
+
+Generated artifacts include the `deploy/orin_pico_cyclonedds` assets. On Pico,
+`install_ros2_humble.sh` installs the CycloneDDS XML, DDS sysctl tuning, a
+reusable ROS 2 environment file, and the link-test tool.
 
 ## Build Host Requirements
 
@@ -50,6 +87,23 @@ sudo apt-get install -y \
   python3-pip python3-vcstool python3-rosdep \
   python3-colcon-common-extensions
 ```
+
+## Bootstrap A Clean Pico From Source
+
+On a clean Ubuntu 20.04 amd64 Pico, clone this repository and run:
+
+```bash
+cd /home/nav01/Public/ros2-humble-focal-env-builder
+
+./scripts/bootstrap_pico_humble_env.sh
+```
+
+The script imports the upstream Humble source checkout from
+`profiles/ros2_humble.repos`, builds the base install space, merges
+`profiles/third_party.lock.repos`, creates deploy artifacts, and installs
+`/opt/ros/humble`. Edit `profiles/third_party.repos` when evaluating new
+third-party packages, then promote the generated `source-lock.repos` after
+validation.
 
 ## Build A Unified Environment
 
@@ -112,7 +166,7 @@ On a clean target machine:
 ```bash
 cd artifacts
 sudo ./install_ros2_humble.sh
-source /opt/ros/humble/setup.bash
+source /etc/ros/source_ros2_humble_clean.bash
 ```
 
 Validate:

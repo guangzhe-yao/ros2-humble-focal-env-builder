@@ -18,6 +18,8 @@ INSTALL_PREFIX="${INSTALL_PREFIX:-/opt/ros/humble}"
 BUILD_BASE="${BUILD_BASE:-$HOME/ros2_humble/build_deploy}"
 ROSDEP_USE_MIRROR="${ROSDEP_USE_MIRROR:-auto}"
 ROSDEP_ROSDISTRO_MIRROR="${ROSDEP_ROSDISTRO_MIRROR:-https://mirrors.ustc.edu.cn/rosdistro}"
+ROSDEP_EXTRA_SOURCE_PATHS="${ROSDEP_EXTRA_SOURCE_PATHS:-}"
+ROSDEP_SKIP_KEYS="${ROSDEP_SKIP_KEYS:-fastcdr rti-connext-dds-6.0.1 urdfdom_headers}"
 COLCON_PACKAGES_ARGS="${COLCON_PACKAGES_ARGS:-}"
 COLCON_CMAKE_ARGS="${COLCON_CMAKE_ARGS:-}"
 AMENT_PREFIX_PATH="${AMENT_PREFIX_PATH:-}"
@@ -119,8 +121,7 @@ update_rosdep_cache() {
   fi
 
   echo "Warning: rosdep update reported a partial network failure; validating the resulting cache." >&2
-  if rosdep resolve cmake --rosdistro humble --os=ubuntu:focal >/dev/null 2>&1 &&
-     rosdep resolve rclcpp --rosdistro humble --os=ubuntu:focal >/dev/null 2>&1; then
+  if rosdep resolve cmake --rosdistro humble --os=ubuntu:focal >/dev/null 2>&1; then
     echo "rosdep cache is usable; continuing after partial update failure." >&2
     return 0
   fi
@@ -178,7 +179,17 @@ install_dependencies() {
   log "Installing rosdep dependencies"
   source_ros_setup "$UNIFIED_PREFIX/setup.bash"
   update_rosdep_cache
-  rosdep install --from-paths "$SRC_DIR" --ignore-src -y --os=ubuntu:focal --rosdistro humble
+  local rosdep_paths=("$SRC_DIR")
+  local extra_path
+  for extra_path in $ROSDEP_EXTRA_SOURCE_PATHS; do
+    rosdep_paths+=("$extra_path")
+  done
+  rosdep install \
+    --from-paths "${rosdep_paths[@]}" \
+    --ignore-src -y \
+    --skip-keys "$ROSDEP_SKIP_KEYS" \
+    --os=ubuntu:focal \
+    --rosdistro humble
 }
 
 build_overlay_into_unified_prefix() {
@@ -209,7 +220,17 @@ verify_unified_prefix() {
     ros2 control --help >/dev/null
   fi
 
-  rosdep check --from-paths "$SRC_DIR" --ignore-src --os=ubuntu:focal --rosdistro humble
+  local rosdep_paths=("$SRC_DIR")
+  local extra_path
+  for extra_path in $ROSDEP_EXTRA_SOURCE_PATHS; do
+    rosdep_paths+=("$extra_path")
+  done
+  rosdep check \
+    --from-paths "${rosdep_paths[@]}" \
+    --ignore-src \
+    --skip-keys "$ROSDEP_SKIP_KEYS" \
+    --os=ubuntu:focal \
+    --rosdistro humble
 }
 
 package_unified_prefix() {
@@ -226,6 +247,15 @@ package_unified_prefix() {
   cp "$OUT_DIR/source-lock.repos" "$OUT_DIR/artifacts/source-lock.repos"
   cp "$REPO_ROOT/scripts/verify_installed_humble_env.sh" "$OUT_DIR/artifacts/verify_installed_humble_env.sh"
   chmod 0755 "$OUT_DIR/artifacts/verify_installed_humble_env.sh"
+
+  if [ -d "$REPO_ROOT/deploy/orin_pico_cyclonedds" ]; then
+    mkdir -p "$OUT_DIR/artifacts/orin_pico_cyclonedds"
+    rsync -a --delete \
+      --exclude '__pycache__/' \
+      --exclude '*.pyc' \
+      "$REPO_ROOT/deploy/orin_pico_cyclonedds/" \
+      "$OUT_DIR/artifacts/orin_pico_cyclonedds/"
+  fi
 }
 
 main() {

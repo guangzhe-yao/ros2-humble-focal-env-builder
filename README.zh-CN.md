@@ -31,6 +31,11 @@
 
 - `profiles/third_party.repos`：新增和评估第三方包时使用的开发清单。
 - `profiles/third_party.lock.repos`：已经验证的精确 commit 清单，用于正式复现。
+- `profiles/ros2_humble.repos`：ROS 2 Humble 官方基础源码清单。
+- `scripts/bootstrap_humble_focal_env.sh`：在一台新 Pico/Focal amd64
+  实机上从 0 拉取 Humble 源码、构建、打包并安装前置环境。
+- `scripts/bootstrap_pico_humble_env.sh`：Pico 实机推荐入口，内置当前验证过的
+  GitHub 代理和 2 并行构建默认值，最终调用上面的通用 bootstrap。
 - `scripts/build_unified_humble_env.sh`：完整汇总构建和出包脚本。
 - `scripts/verify_installed_humble_env.sh`：部署后的环境检查脚本。
 - `packaging/build_ros2_humble_bundle.sh`：主 deb、marker 和安装器生成脚本。
@@ -38,8 +43,65 @@
 - `docs/adding-third-party-packages.md`：新增第三方包的完整操作流程。
 - `docs/risks-and-mitigations.md`：风险和规避方案。
 - `docs/focal-build-host-network.md`：实机构建网络配置。
+- `docs/new-pico-repeatable-deploy.md`：新 Pico 机器可重复安装 Humble
+  前置环境的闭环。
+- `docs/local-to-pico-quickstart.zh-CN.md`：一台新 Pico 从 0 安装
+  Humble 前置环境的最短操作路径。
+- `docs/end-to-end-workflow.zh-CN.md`：从本地开发机、Focal 构建机到
+  Pico/Orin 实机部署的端到端流程。
+- `deploy/orin_pico_cyclonedds`：Orin Docker 与 Pico 固定有线 IP 的
+  CycloneDDS 配置、容器启动脚本和 topic/service/action 冒烟测试。
 
 构建目录、日志、install space 和 deb 产物不会提交到 Git。
+
+## Orin/Pico 多机通信部署
+
+当前机器人拓扑已按以下固定 IP 验证：
+
+- Orin 有线口：`192.168.217.100`
+- Pico 有线口：`192.168.217.66`
+- Orin Humble 镜像：
+  `10.51.33.201:30002/navi_project/sensor:22CUDA_humble`
+- RMW：`rmw_cyclonedds_cpp`
+- DDS 发现方式：禁用 multicast，固定 unicast peers。
+
+部署和测试入口：
+
+```bash
+cd deploy/orin_pico_cyclonedds
+```
+
+详见：
+
+```text
+deploy/orin_pico_cyclonedds/README.zh-CN.md
+```
+
+该目录里的 `ros2_link_test.py` 已用于双向验证：
+
+- Pico server / Orin client：topic、service、action 正常。
+- Orin server / Pico client：topic、service、action 正常。
+
+业务节点必须在启动前设置同一组环境变量：
+
+```bash
+export ROS_DOMAIN_ID=20
+export ROS_LOCALHOST_ONLY=0
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+export CYCLONEDDS_URI=file:///etc/ros/cyclonedds/<对应机器配置>.xml
+```
+
+注意：RMW 是进程启动时决定的，已经运行中的 ROS 2 节点不能通过后续修改
+环境变量切换到 CycloneDDS，需要用上述环境重启。
+
+生成的 artifact 会携带 `deploy/orin_pico_cyclonedds`，`install_ros2_humble.sh`
+在新 Pico 上安装时会自动部署 Pico 侧 CycloneDDS、DDS sysctl 和
+`ros2_link_test.py`。详见：
+
+```text
+docs/new-pico-repeatable-deploy.md
+docs/end-to-end-workflow.zh-CN.md
+```
 
 ## 自定义功能包能否正常使用第三方官方包
 
@@ -70,7 +132,7 @@ ament_target_dependencies(my_controller
 编译前加载统一环境：
 
 ```bash
-source /opt/ros/humble/setup.bash
+source /etc/ros/source_ros2_humble_clean.bash
 colcon build --symlink-install
 source install/setup.bash
 ```
@@ -91,13 +153,13 @@ cd tests/controller_interface_smoke
 每个新终端都要执行：
 
 ```bash
-source /opt/ros/humble/setup.bash
+source /etc/ros/source_ros2_humble_clean.bash
 ```
 
 如果还有自己的 overlay：
 
 ```bash
-source /opt/ros/humble/setup.bash
+source /etc/ros/source_ros2_humble_clean.bash
 source ~/my_ws/install/setup.bash
 ```
 
@@ -168,6 +230,32 @@ cmake --version
 - 参数文件能否读取
 - 与硬件、DDS、设备权限相关的运行测试
 
+## 新 Pico 从 0 安装
+
+如果 Pico 上没有任何 Humble 环境，直接在 Pico 上运行：
+
+```bash
+cd /home/nav01/Public/ros2-humble-focal-env-builder
+
+./scripts/bootstrap_pico_humble_env.sh
+```
+
+该脚本会根据 `profiles/ros2_humble.repos` 拉取 ROS 2 Humble 官方源码、按
+`profiles/third_party.lock.repos` 合入第三方包、生成 `artifacts/`，并安装到
+`/opt/ros/humble`。
+
+新增第三方包时修改：
+
+```text
+profiles/third_party.repos
+```
+
+详见：
+
+```text
+docs/local-to-pico-quickstart.zh-CN.md
+```
+
 ## 后续添加第三方官方包
 
 ### 第一步：确认依赖是否已经存在
@@ -175,7 +263,7 @@ cmake --version
 在实机执行：
 
 ```bash
-source /opt/ros/humble/setup.bash
+source /etc/ros/source_ros2_humble_clean.bash
 ros2 pkg prefix <package_name>
 rosdep resolve <package_name> --rosdistro humble --os=ubuntu:focal
 ```
@@ -295,7 +383,7 @@ sudo rm -rf /opt/ros/humble
 
 cd artifacts
 sudo ./install_ros2_humble.sh
-source /opt/ros/humble/setup.bash
+source /etc/ros/source_ros2_humble_clean.bash
 ./verify_installed_humble_env.sh
 ```
 
