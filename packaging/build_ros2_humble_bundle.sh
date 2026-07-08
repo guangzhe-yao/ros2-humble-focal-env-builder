@@ -49,6 +49,11 @@ prepare_dirs() {
   log "Preparing package root at $PKGROOT"
   rm -rf "$PKGROOT"
   mkdir -p "$STAGED_PREFIX" "$PKGROOT/DEBIAN" "$ARTIFACT_DIR" "$BUILD_DIR"
+  rm -f \
+    "$ARTIFACT_DIR/${PKG_NAME}_"*"_${PKG_ARCH}.deb" \
+    "$ARTIFACT_DIR/${PKG_NAME}_"*"_${PKG_ARCH}.deb.info" \
+    "$ARTIFACT_DIR/${PKG_NAME}_"*"_${PKG_ARCH}.deb.contents" \
+    "$ARTIFACT_DIR"/ros-humble-package-markers_*"_${PKG_ARCH}.tar.gz"
 }
 
 copy_install_space() {
@@ -92,10 +97,103 @@ replace_text_reference() {
 rewrite_text_references() {
   log "Rewriting install-space text references for $INSTALL_PREFIX"
   replace_text_reference "$SRC_PREFIX" "$INSTALL_PREFIX"
+  replace_text_reference "$HOME/ros2_humble/install_deploy" "$INSTALL_PREFIX"
   replace_text_reference "$BUILD_BASE/rviz_ogre_vendor/ogre_install" "$INSTALL_PREFIX/opt/rviz_ogre_vendor"
   replace_text_reference "$BUILD_BASE/rviz_assimp_vendor/assimp_install" "$INSTALL_PREFIX/opt/rviz_assimp_vendor"
   replace_text_reference "$BUILD_BASE/console_bridge_vendor/console_bridge_vendor_install" "$INSTALL_PREFIX"
   replace_text_reference "$BUILD_BASE/google_benchmark_vendor/google_benchmark_vendor_install" "$INSTALL_PREFIX"
+}
+
+write_single_prefix_setup_scripts() {
+  log "Writing single-prefix setup scripts"
+
+  cat > "$STAGED_PREFIX/setup.bash" <<'EOF'
+# generated for relocated ROS 2 Humble bundle
+
+_colcon_prefix_chain_bash_source_script() {
+  if [ -f "$1" ]; then
+    if [ -n "${COLCON_TRACE:-}" ]; then
+      echo "# . \"$1\""
+    fi
+    . "$1"
+  else
+    echo "not found: \"$1\"" 1>&2
+  fi
+}
+
+COLCON_CURRENT_PREFIX="$(builtin cd "$(dirname "${BASH_SOURCE[0]}")" > /dev/null && pwd)"
+_colcon_prefix_chain_bash_source_script "$COLCON_CURRENT_PREFIX/local_setup.bash"
+
+unset COLCON_CURRENT_PREFIX
+unset -f _colcon_prefix_chain_bash_source_script
+EOF
+
+  cat > "$STAGED_PREFIX/setup.zsh" <<'EOF'
+# generated for relocated ROS 2 Humble bundle
+
+_colcon_prefix_chain_zsh_source_script() {
+  if [ -f "$1" ]; then
+    if [ -n "${COLCON_TRACE:-}" ]; then
+      echo "# . \"$1\""
+    fi
+    . "$1"
+  else
+    echo "not found: \"$1\"" 1>&2
+  fi
+}
+
+COLCON_CURRENT_PREFIX="$(builtin cd -q "$(dirname "${(%):-%N}")" > /dev/null && pwd)"
+_colcon_prefix_chain_zsh_source_script "$COLCON_CURRENT_PREFIX/local_setup.zsh"
+
+unset COLCON_CURRENT_PREFIX
+unset -f _colcon_prefix_chain_zsh_source_script
+EOF
+
+  cat > "$STAGED_PREFIX/setup.sh" <<EOF
+# generated for relocated ROS 2 Humble bundle
+
+_colcon_prefix_chain_sh_COLCON_CURRENT_PREFIX="$INSTALL_PREFIX"
+if [ ! -z "\${COLCON_CURRENT_PREFIX:-}" ]; then
+  _colcon_prefix_chain_sh_COLCON_CURRENT_PREFIX="\$COLCON_CURRENT_PREFIX"
+elif [ ! -d "\$_colcon_prefix_chain_sh_COLCON_CURRENT_PREFIX" ]; then
+  echo "The install prefix \"\$_colcon_prefix_chain_sh_COLCON_CURRENT_PREFIX\" does not exist." 1>&2
+  unset _colcon_prefix_chain_sh_COLCON_CURRENT_PREFIX
+  return 1
+fi
+
+_colcon_prefix_chain_sh_source_script() {
+  if [ -f "\$1" ]; then
+    if [ -n "\${COLCON_TRACE:-}" ]; then
+      echo "# . \"\$1\""
+    fi
+    . "\$1"
+  else
+    echo "not found: \"\$1\"" 1>&2
+  fi
+}
+
+COLCON_CURRENT_PREFIX="\$_colcon_prefix_chain_sh_COLCON_CURRENT_PREFIX"
+_colcon_prefix_chain_sh_source_script "\$COLCON_CURRENT_PREFIX/local_setup.sh"
+
+unset _colcon_prefix_chain_sh_COLCON_CURRENT_PREFIX
+unset _colcon_prefix_chain_sh_source_script
+unset COLCON_CURRENT_PREFIX
+EOF
+
+  cat > "$STAGED_PREFIX/setup.ps1" <<'EOF'
+# generated for relocated ROS 2 Humble bundle
+
+$colconCurrentPrefix = Split-Path $MyInvocation.MyCommand.Path
+$localSetup = Join-Path $colconCurrentPrefix "local_setup.ps1"
+if (Test-Path $localSetup) {
+  if ($env:COLCON_TRACE) {
+    Write-Output ". `"$localSetup`""
+  }
+  . $localSetup
+} else {
+  Write-Error "not found: `"$localSetup`""
+}
+EOF
 }
 
 rewrite_one_rpath() {
@@ -139,6 +237,7 @@ rewrite_elf_rpaths() {
 
 relocate_install_space() {
   rewrite_text_references
+  write_single_prefix_setup_scripts
   rewrite_elf_rpaths
 }
 
@@ -531,6 +630,20 @@ install_user_cmake_for_overlay() {
   fi
 }
 
+install_deb_or_fix_deps() {
+  if dpkg -i "\$@"; then
+    return 0
+  fi
+
+  if [ "\$INSTALL_APT_DEPS" = "0" ]; then
+    echo "dpkg failed while INSTALL_APT_DEPS=0; not running online apt fixup." >&2
+    echo "Install the bundled apt dependencies first, then rerun this installer." >&2
+    return 1
+  fi
+
+  apt-get -f install -y
+}
+
 if [ "\$(id -u)" -ne 0 ]; then
   echo "Please run with sudo: sudo \$0" >&2
   exit 1
@@ -587,13 +700,13 @@ else
 fi
 install_user_cmake_for_overlay
 
-dpkg -i "\$DEB" || apt-get -f install -y
+install_deb_or_fix_deps "\$DEB"
 
 if [ -f "\$MARKERS_TAR" ]; then
   marker_tmp="\$(mktemp -d)"
   trap 'rm -rf "\$marker_tmp"' EXIT
   tar -xzf "\$MARKERS_TAR" -C "\$marker_tmp"
-  dpkg -i "\$marker_tmp"/*/*.deb || apt-get -f install -y
+  install_deb_or_fix_deps "\$marker_tmp"/*/*.deb
 fi
 install_rosdep_rules
 install_pico_cyclonedds_assets

@@ -61,8 +61,29 @@ if [ -f /opt/zj_humanoid/tools/ros2_link_test.py ]; then
   echo "ROS 2 link test tool -> /opt/zj_humanoid/tools/ros2_link_test.py"
 fi
 
-rosdep resolve rclcpp --rosdistro humble --os=ubuntu:focal >/dev/null
-rosdep resolve std_msgs --rosdistro humble --os=ubuntu:focal >/dev/null
+check_rosdep_rules() {
+  if ! command -v rosdep >/dev/null 2>&1; then
+    echo "Warning: rosdep is not installed; skipping rosdep rule cache check." >&2
+    return 0
+  fi
+
+  local missing=()
+  local key
+  for key in rclcpp std_msgs; do
+    if rosdep resolve "$key" --rosdistro humble --os=ubuntu:focal >/dev/null 2>&1; then
+      echo "rosdep rule $key -> ok"
+    else
+      missing+=("$key")
+    fi
+  done
+
+  if [ "${#missing[@]}" -gt 0 ]; then
+    echo "Warning: rosdep cache has no rule for: ${missing[*]}" >&2
+    echo "Runtime ROS 2 is installed; update rosdep before building overlay workspaces with rosdep." >&2
+  fi
+}
+
+check_rosdep_rules
 
 if ros2 pkg prefix ros2controlcli >/dev/null 2>&1; then
   ros2 control --help >/dev/null
