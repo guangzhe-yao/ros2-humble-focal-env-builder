@@ -1,0 +1,17 @@
+# Optional local/vendor packages used by navi_ros2_sdk Pico overlays.
+#
+# These packages usually come from local .deb files instead of public Ubuntu apt
+# repositories. Put their .deb files into a directory and pass:
+#   EXTRA_APT_DEBS_DIR=/path/to/local-debs
+#   EXTRA_APT_ROOT_DEPS_FILE="$PWD/profiles/pico_robot_overlay_apt_deps.txt:/path/to/this-file-or-your-copy"
+#
+# In most cases, just setting EXTRA_APT_DEBS_DIR is enough: the packager reads
+# Package/Depends metadata from each .deb automatically. Uncomment entries here
+# only when you want to force an explicit root package name.
+# zj-humanoid-rtipc-runtime
+# zj-humanoid-uplimb-runtime
+# libbase-fsm
+# libonnxruntime
+# pinocchio
+# legged-nav-fsm
+# legged-rl-controllers

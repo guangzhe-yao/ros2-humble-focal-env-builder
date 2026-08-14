@@ -7,8 +7,9 @@ artifacts/
 *.deb.contents
 *.deb.info
 *.tar.gz
+offline_artifacts/*.tar.gz.sha256
+offline_artifacts/ros2-humble-focal-offline-bundle_*_amd64/
 *.log
 *.tmp
 __pycache__/
 *.pyc
-

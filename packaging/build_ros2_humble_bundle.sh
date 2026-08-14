@@ -244,35 +244,70 @@ relocate_install_space() {
 write_manual_deps() {
   cat > "$MANUAL_DEPS_FILE" <<'EOF'
 bash
+bash-completion
 ca-certificates
 curl
 libacl1
-libasio-dev
+libassimp5
+libcwiid1
+libfreeimage3
+libignition-math6
+libilmbase24
+libopencv-core4.2
+libopencv-highgui4.2
+libopencv-imgcodecs4.2
+libopencv-imgproc4.2
+libopencv-videoio4.2
+libopenexr24
 libpython3.8
+libpyside2-py3-5.14
 libqt5core5a
 libqt5gui5
 libqt5opengl5
 libqt5svg5
 libqt5widgets5
+libsdl2-2.0-0
+libshiboken2-py3-5.14
+libspdlog1
+libspnav0
+libyaml-cpp0.6
 python3
+python3-argcomplete
 python3-catkin-pkg
 python3-empy
+python3-importlib-metadata
 python3-lark
+python3-netifaces
 python3-numpy
+python3-packaging
 python3-pkg-resources
+python3-psutil
+python3-pygraphviz
 python3-yaml
 EOF
 
   cat > "$DEV_DEPS_FILE" <<'EOF'
 build-essential
+chrony
 cmake
 git
+libboost-filesystem-dev
+libboost-regex-dev
+libboost-serialization-dev
+libboost-thread-dev
+libeigen3-dev
+libfmt-dev
+libgoogle-glog-dev
+libhdf5-dev
+libnl-3-dev
+libyaml-cpp-dev
+libzmq3-dev
+pkg-config
 python3-colcon-common-extensions
 python3-pip
-python3-rosdep
 python3-vcstool
 python3-venv
-ros-dev-tools
+sysstat
 EOF
 }
 
@@ -723,7 +758,9 @@ For overlay workspaces:
   source \$INSTALL_PREFIX/setup.bash
   mkdir -p ~/ros2_overlay/src
   cd ~/ros2_overlay
-  rosdep install --from-paths src --ignore-src -y --os=ubuntu:focal --rosdistro humble
+  if command -v rosdep >/dev/null 2>&1; then
+    rosdep install --from-paths src --ignore-src -y --os=ubuntu:focal --rosdistro humble
+  fi
   export PATH=\$HOME/.local/bin:\$PATH
   colcon build --symlink-install
   source install/setup.bash
@@ -904,7 +941,11 @@ mkdir -p ~/ros2_overlay/src
 cd ~/ros2_overlay/src
 # git clone or copy third-party packages here
 cd ~/ros2_overlay
-rosdep install --from-paths src --ignore-src -y --os=ubuntu:focal --rosdistro humble
+if command -v rosdep >/dev/null 2>&1; then
+  rosdep install --from-paths src --ignore-src -y --os=ubuntu:focal --rosdistro humble
+else
+  echo "rosdep is not installed; install declared apt/vendor dependencies from the offline bundle first."
+fi
 export PATH=\$HOME/.local/bin:\$PATH
 colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
 source install/setup.bash

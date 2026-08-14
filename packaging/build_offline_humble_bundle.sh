@@ -11,6 +11,11 @@ APT_INCLUDE_RECOMMENDS="${APT_INCLUDE_RECOMMENDS:-0}"
 APT_DOWNLOAD_TIMEOUT="${APT_DOWNLOAD_TIMEOUT:-300}"
 APT_DOWNLOAD_RETRIES="${APT_DOWNLOAD_RETRIES:-3}"
 FAIL_ON_MISSING_APT_DEBS="${FAIL_ON_MISSING_APT_DEBS:-0}"
+ENABLE_OSRF_GAZEBO_SOURCE="${ENABLE_OSRF_GAZEBO_SOURCE:-1}"
+OSRF_GAZEBO_APT_SOURCE="${OSRF_GAZEBO_APT_SOURCE:-deb [trusted=yes] http://packages.osrfoundation.org/gazebo/ubuntu-stable focal main}"
+APT_EXCLUDED_PACKAGES_REGEX="${APT_EXCLUDED_PACKAGES_REGEX:-^(python3-rosdep|python3-rosdep2)$}"
+EXTRA_APT_ROOT_DEPS_FILE="${EXTRA_APT_ROOT_DEPS_FILE:-}"
+EXTRA_APT_DEBS_DIR="${EXTRA_APT_DEBS_DIR:-}"
 
 BUNDLE_ROOT="$OUT_DIR/$BUNDLE_NAME"
 APT_DEBS_DIR="$BUNDLE_ROOT/apt_debs"
@@ -66,6 +71,58 @@ prepare_bundle_root() {
     "$ARTIFACT_DIR/" "$BUNDLE_ARTIFACT_DIR/"
 }
 
+emit_extra_root_deps_files() {
+  if [ -z "$EXTRA_APT_ROOT_DEPS_FILE" ]; then
+    return 0
+  fi
+
+  local extra_file
+  local -a extra_dep_files=()
+  IFS=':' read -r -a extra_dep_files <<< "$EXTRA_APT_ROOT_DEPS_FILE"
+  for extra_file in "${extra_dep_files[@]}"; do
+    [ -z "$extra_file" ] && continue
+    if [ ! -f "$extra_file" ]; then
+      echo "EXTRA_APT_ROOT_DEPS_FILE entry does not exist: $extra_file" >&2
+      exit 1
+    fi
+    sed -e 's/#.*$//' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e '/^$/d' "$extra_file"
+  done
+}
+
+emit_extra_deb_root_deps() {
+  if [ -z "$EXTRA_APT_DEBS_DIR" ]; then
+    return 0
+  fi
+
+  local extra_dir deb field deps
+  local -a extra_deb_dirs=()
+  IFS=':' read -r -a extra_deb_dirs <<< "$EXTRA_APT_DEBS_DIR"
+  for extra_dir in "${extra_deb_dirs[@]}"; do
+    [ -z "$extra_dir" ] && continue
+    if [ ! -d "$extra_dir" ]; then
+      echo "EXTRA_APT_DEBS_DIR entry does not exist: $extra_dir" >&2
+      exit 1
+    fi
+    while IFS= read -r -d '' deb; do
+      dpkg-deb -f "$deb" Package 2>/dev/null || true
+      for field in Pre-Depends Depends; do
+        deps="$(dpkg-deb -f "$deb" "$field" 2>/dev/null || true)"
+        printf '%s\n' "$deps" \
+          | tr ',' '\n' \
+          | awk '
+              {
+                sub(/\|.*/, "", $0)
+                sub(/\(.*/, "", $0)
+                gsub(/^[ \t]+|[ \t]+$/, "", $0)
+                split($0, words, /[ \t]+/)
+                if (words[1] != "") print words[1]
+              }
+            '
+      done
+    done < <(find "$extra_dir" -maxdepth 1 -type f -name '*.deb' -print0)
+  done
+}
+
 collect_root_deps() {
   log "Collecting root apt dependency package names"
   {
@@ -73,13 +130,35 @@ collect_root_deps() {
     if [ "$INCLUDE_DEV_DEPS" = "1" ] && [ -f "$ARTIFACT_DIR/dev-deps.txt" ]; then
       sed '/^$/d' "$ARTIFACT_DIR/dev-deps.txt"
     fi
-  } | sort -u > "$DEPS_ROOT_FILE"
+    emit_extra_root_deps_files
+    emit_extra_deb_root_deps
+  } | awk -v re="$APT_EXCLUDED_PACKAGES_REGEX" 'NF && (re == "" || $0 !~ re)' \
+    | sort -u > "$DEPS_ROOT_FILE"
+}
+
+copy_extra_apt_debs() {
+  if [ -z "$EXTRA_APT_DEBS_DIR" ]; then
+    return 0
+  fi
+
+  local extra_dir
+  local -a extra_deb_dirs=()
+  IFS=':' read -r -a extra_deb_dirs <<< "$EXTRA_APT_DEBS_DIR"
+  for extra_dir in "${extra_deb_dirs[@]}"; do
+    [ -z "$extra_dir" ] && continue
+    if [ ! -d "$extra_dir" ]; then
+      echo "EXTRA_APT_DEBS_DIR entry does not exist: $extra_dir" >&2
+      exit 1
+    fi
+    log "Copying extra local debs from $extra_dir"
+    find "$extra_dir" -maxdepth 1 -type f -name '*.deb' -print0 \
+      | xargs -0 -r cp -t "$APT_DEBS_DIR"
+  done
 }
 
 resolve_apt_closure() {
   log "Resolving recursive apt dependency closure"
   local depends_flags=(
-    --recurse
     --no-suggests
     --no-conflicts
     --no-breaks
@@ -90,15 +169,53 @@ resolve_apt_closure() {
     depends_flags+=(--no-recommends)
   fi
 
-  mapfile -t root_deps < "$DEPS_ROOT_FILE"
-  apt-cache depends "${depends_flags[@]}" "${root_deps[@]}" \
-    | awk '
-        /^[[:alnum:]][[:alnum:].+:-]+$/ {print $1}
-        /^[[:space:]]*(PreDepends|Depends|Recommends):[[:space:]]/ {print $2}
-      ' \
-    | sed -e 's/[<>=]//g' \
-    | sed '/^$/d' \
-    | sort -u > "$DEPS_CLOSURE_FILE"
+  local dep_line_re='^[[:space:]]*\|?(PreDepends|Depends):[[:space:]]'
+  if [ "$APT_INCLUDE_RECOMMENDS" = "1" ]; then
+    dep_line_re='^[[:space:]]*\|?(PreDepends|Depends|Recommends):[[:space:]]'
+  fi
+
+  local -a queue=()
+  local pkg dep candidate
+  declare -A seen=()
+  mapfile -t queue < "$DEPS_ROOT_FILE"
+  : > "$DEPS_CLOSURE_FILE"
+
+  while [ "${#queue[@]}" -gt 0 ]; do
+    pkg="${queue[0]}"
+    queue=("${queue[@]:1}")
+    [ -z "$pkg" ] && continue
+    if [ -n "$APT_EXCLUDED_PACKAGES_REGEX" ] && [[ "$pkg" =~ $APT_EXCLUDED_PACKAGES_REGEX ]]; then
+      continue
+    fi
+    if [ "${seen[$pkg]+set}" = "set" ]; then
+      continue
+    fi
+    seen["$pkg"]=1
+    printf '%s\n' "$pkg" >> "$DEPS_CLOSURE_FILE"
+
+    candidate="$(apt-cache policy "$pkg" 2>/dev/null | awk '/Candidate:/ {print $2; exit}' || true)"
+    if [ -z "$candidate" ] || [ "$candidate" = "(none)" ]; then
+      continue
+    fi
+
+    while IFS= read -r dep; do
+      dep="${dep//[<>]/}"
+      dep="${dep//,/}"
+      [ -z "$dep" ] && continue
+      if [ -n "$APT_EXCLUDED_PACKAGES_REGEX" ] && [[ "$dep" =~ $APT_EXCLUDED_PACKAGES_REGEX ]]; then
+        continue
+      fi
+      if [ "${seen[$dep]+set}" != "set" ]; then
+        queue+=("$dep")
+      fi
+    done < <(
+      apt-cache depends "${depends_flags[@]}" "$pkg" \
+        | awk -v re="$dep_line_re" '$0 ~ re {print $2}' \
+        | sed -e 's/[<>=]//g' -e '/^$/d'
+    )
+  done
+
+  sort -u -o "$DEPS_CLOSURE_FILE" "$DEPS_CLOSURE_FILE"
 }
 
 download_apt_debs() {
@@ -106,6 +223,7 @@ download_apt_debs() {
   : > "$MISSING_DEPS_FILE"
   : > "$APT_DOWNLOAD_ERRORS_FILE"
   : > "$VIRTUAL_DEPS_FILE"
+  copy_extra_apt_debs
   pushd "$APT_DEBS_DIR" >/dev/null
 
   local attempt candidate pkg
@@ -113,6 +231,11 @@ download_apt_debs() {
     [ -z "$pkg" ] && continue
     candidate="$(apt-cache policy "$pkg" 2>/dev/null | awk '/Candidate:/ {print $2; exit}' || true)"
     if [ -z "$candidate" ] || [ "$candidate" = "(none)" ]; then
+      if [ "$pkg" = "libignition-math6" ] && [ "$ENABLE_OSRF_GAZEBO_SOURCE" = "1" ]; then
+        if download_osrf_gazebo_deb "$pkg"; then
+          continue
+        fi
+      fi
       printf '%s\n' "$pkg" >> "$MISSING_DEPS_FILE"
       continue
     fi
@@ -141,13 +264,14 @@ download_apt_debs() {
     filtered_missing="$(mktemp)"
     sort -u "$MISSING_DEPS_FILE" | while IFS= read -r pkg; do
       case "$pkg" in
-        awk|debconf-2.0|fonts-freefont|libblas.so.3|liblapack.so.3|python3:any|python3.8:any|qtbase-abi-*)
+        awk|dbus-session-bus|debconf-2.0|default-dbus-session-bus|fonts-freefont|gsettings-backend|libblas.so.3|liblapack.so.3|libopencl-1.1-1|libopencl-1.2-1|libopencl1|python3:any|python3.8:any|qtbase-abi-*|qtdeclarative-abi-*)
           printf '%s\n' "$pkg" >> "$VIRTUAL_DEPS_FILE"
           continue
           ;;
       esac
       local lookup_pkg="$pkg"
       lookup_pkg="${lookup_pkg%:any}"
+      lookup_pkg="${lookup_pkg%:amd64}"
       if find . -maxdepth 1 -name "${lookup_pkg}_*.deb" | grep -q .; then
         continue
       fi
@@ -170,6 +294,34 @@ download_apt_debs() {
       exit 1
     fi
   fi
+}
+
+download_osrf_gazebo_deb() {
+  local pkg="$1"
+  local apt_tmp source_list source_parts lists_dir
+  apt_tmp="$(mktemp -d)"
+  source_list="$apt_tmp/sources.list"
+  source_parts="$apt_tmp/sourceparts"
+  lists_dir="$apt_tmp/lists"
+  mkdir -p "$source_parts" "$lists_dir/partial"
+  printf '%s\n' "$OSRF_GAZEBO_APT_SOURCE" > "$source_list"
+
+  local apt_opts=(
+    -o "Dir::Etc::sourcelist=$source_list"
+    -o "Dir::Etc::sourceparts=$source_parts"
+    -o "Dir::State::Lists=$lists_dir"
+    -o "APT::Get::List-Cleanup=0"
+    -o "Acquire::Languages=none"
+  )
+
+  log "Downloading apt package from OSRF Gazebo source: $pkg"
+  if apt-get "${apt_opts[@]}" update >>"$APT_DOWNLOAD_ERRORS_FILE" 2>&1 \
+      && apt-get "${apt_opts[@]}" download "$pkg" >>"$APT_DOWNLOAD_ERRORS_FILE" 2>&1; then
+    rm -rf "$apt_tmp"
+    return 0
+  fi
+  rm -rf "$apt_tmp"
+  return 1
 }
 
 write_apt_repo_index() {
@@ -278,11 +430,35 @@ install_bundled_apt_dependencies() {
     -o "APT::Get::List-Cleanup=0"
     -o "Acquire::Languages=none"
   )
+  local apt_install_cmd=(
+    apt-get "${apt_opts[@]}" install
+    -y
+    --no-install-recommends
+    --no-upgrade
+  )
+  local apt_sim_log
+  apt_sim_log="$(mktemp)"
 
   echo "Installing bundled apt dependencies from local repository: $APT_DEBS_DIR"
   apt-get "${apt_opts[@]}" update
+  if ! xargs -r -a "$APT_ROOT_DEPS" env DEBIAN_FRONTEND=noninteractive \
+      "${apt_install_cmd[@]}" -s >"$apt_sim_log" 2>&1; then
+    echo "Unable to resolve bundled apt dependencies safely." >&2
+    sed 's/^/  /' "$apt_sim_log" >&2
+    rm -f "$apt_sim_log"
+    exit 1
+  fi
+  if grep -Eq '^(The following packages will be REMOVED:|WARNING: The following essential packages will be removed)' "$apt_sim_log"; then
+    echo "Refusing to install bundled apt dependencies because apt planned package removals." >&2
+    echo "This usually means the target OS package baseline is inconsistent with the bundle." >&2
+    sed 's/^/  /' "$apt_sim_log" >&2
+    rm -f "$apt_sim_log"
+    exit 1
+  fi
+  rm -f "$apt_sim_log"
+
   xargs -r -a "$APT_ROOT_DEPS" env DEBIAN_FRONTEND=noninteractive \
-    apt-get "${apt_opts[@]}" install -y --no-install-recommends
+    "${apt_install_cmd[@]}"
   rm -rf "$apt_tmp"
 }
 
@@ -376,6 +552,10 @@ REINSTALL_EXISTING=0 sudo -E ./install_offline_humble_bundle.sh
 - \`apt-virtual-deps.txt\`: apt 输出的虚拟包名或 ABI 别名，已由实际 provider 包满足。
 - \`apt-missing-deps.txt\`: 未能下载的虚拟包或网络失败包；如果为空，离线依赖更完整。
 
+运行版离线包不默认安装 \`python3-rosdep\` / \`python3-rosdep2\`，避免在保留
+ROS 1/Noetic 的机器上触发 apt 删除 \`ros-noetic-*\` 或业务包。需要在目标机上
+编译 overlay 时，再按该机器的 ROS 1/ROS 2 共存策略单独处理 rosdep。
+
 目标 Pico 不需要 GitHub，也不需要源码编译。
 EOF
 }
@@ -384,7 +564,7 @@ make_tarball() {
   log "Creating tarball"
   local tarball="$OUT_DIR/$BUNDLE_NAME.tar.gz"
   tar -C "$OUT_DIR" -czf "$tarball" "$BUNDLE_NAME"
-  sha256sum "$tarball" > "$tarball.sha256"
+  (cd "$OUT_DIR" && sha256sum "$(basename "$tarball")" > "$(basename "$tarball").sha256")
   ln -sfn "$(basename "$tarball")" "$OUT_DIR/ros2-humble-focal-offline-bundle_latest_${PKG_ARCH}.tar.gz"
   ln -sfn "$(basename "$tarball").sha256" "$OUT_DIR/ros2-humble-focal-offline-bundle_latest_${PKG_ARCH}.tar.gz.sha256"
   log "Offline bundle created: $tarball"

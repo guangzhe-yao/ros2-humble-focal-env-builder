@@ -61,6 +61,41 @@ if [ -f /opt/zj_humanoid/tools/ros2_link_test.py ]; then
   echo "ROS 2 link test tool -> /opt/zj_humanoid/tools/ros2_link_test.py"
 fi
 
+check_bash_completion() {
+  if [ -z "${BASH_VERSION:-}" ]; then
+    return 0
+  fi
+
+  if ! command -v register-python-argcomplete3 >/dev/null 2>&1 &&
+      ! command -v register-python-argcomplete >/dev/null 2>&1; then
+    echo "ERROR: python3-argcomplete is missing; ros2 tab completion will not work." >&2
+    return 1
+  fi
+
+  if ! complete -p ros2 >/dev/null 2>&1 &&
+      [ -f "$INSTALL_PREFIX/share/ros2cli/environment/ros2-argcomplete.bash" ]; then
+    # shellcheck disable=SC1090
+    source "$INSTALL_PREFIX/share/ros2cli/environment/ros2-argcomplete.bash"
+  fi
+
+  if complete -p ros2 >/dev/null 2>&1; then
+    echo "ros2 bash completion -> registered"
+  else
+    echo "ERROR: ros2 bash completion is not registered after sourcing setup.bash." >&2
+    return 1
+  fi
+}
+
+check_optional_python_tools() {
+  python3 - <<'PY'
+import importlib
+
+for module_name in ("argcomplete", "pygraphviz"):
+    importlib.import_module(module_name)
+    print(f"{module_name} -> import ok")
+PY
+}
+
 check_rosdep_rules() {
   if ! command -v rosdep >/dev/null 2>&1; then
     echo "Warning: rosdep is not installed; skipping rosdep rule cache check." >&2
@@ -83,6 +118,8 @@ check_rosdep_rules() {
   fi
 }
 
+check_bash_completion
+check_optional_python_tools
 check_rosdep_rules
 
 if ros2 pkg prefix ros2controlcli >/dev/null 2>&1; then

@@ -1,0 +1,23 @@
+# Extra public apt packages needed to build/debug navi_ros2_sdk robot,
+# lowerlimb and upperlimb overlays on Ubuntu 20.04 amd64 Pico.
+#
+# Use with:
+#   INCLUDE_DEV_DEPS=1 \
+#   EXTRA_APT_ROOT_DEPS_FILE="$PWD/profiles/pico_robot_overlay_apt_deps.txt" \
+#   BUILD_OFFLINE_BUNDLE=1 \
+#   ./packaging/repackage_existing_humble_artifacts.sh
+chrony
+libboost-filesystem-dev
+libboost-regex-dev
+libboost-serialization-dev
+libboost-thread-dev
+libeigen3-dev
+libfmt-dev
+libgoogle-glog-dev
+libhdf5-dev
+libnl-3-dev
+libspdlog-dev
+libyaml-cpp-dev
+libzmq3-dev
+pkg-config
+sysstat
