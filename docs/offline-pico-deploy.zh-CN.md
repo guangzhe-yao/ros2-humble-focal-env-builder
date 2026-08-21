@@ -171,6 +171,10 @@ install_offline_humble_bundle.sh
 `artifacts/` 是源码构建后的 ROS 2 Humble 环境；`apt_debs/` 是目标 Pico
 安装时需要的 Ubuntu 依赖包。目标 Pico 不再需要访问 GitHub，也不需要重新编译。
 
+打包器会同时读取 `runtime-deps.txt` 和主 Humble deb 的 `Depends` / `Pre-Depends`
+字段。即使复用了旧 artifacts 且文本依赖清单已经过期，离线包也会按 deb 的实际
+声明补齐依赖，避免安装到 `dpkg` 阶段才发现缺包。
+
 默认离线包只包含运行依赖。若你确实希望目标 Pico 后续也能离线编译 overlay，
 可以在稳定 Pico 打包时加：
 

@@ -291,6 +291,7 @@ build-essential
 chrony
 cmake
 git
+libasio-dev
 libboost-filesystem-dev
 libboost-regex-dev
 libboost-serialization-dev
@@ -300,6 +301,7 @@ libfmt-dev
 libgoogle-glog-dev
 libhdf5-dev
 libnl-3-dev
+libspdlog-dev
 libyaml-cpp-dev
 libzmq3-dev
 pkg-config

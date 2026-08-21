@@ -172,6 +172,13 @@ RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 CYCLONEDDS_URI=file:///etc/ros/cyclonedds/pico-cyclonedds.xml
 ```
 
+目标机还要直接开发 overlay 时，可用严格模式同时检查编译工具和 CMake 版本：
+
+```bash
+VERIFY_OVERLAY_BUILD_TOOLS=1 \
+  ~/ros2_humble_unified/package_out/artifacts/verify_installed_humble_env.sh
+```
+
 也可以执行安装产物里的验证脚本：
 
 ```bash

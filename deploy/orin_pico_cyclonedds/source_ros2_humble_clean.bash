@@ -49,6 +49,12 @@ _zj_filter_colon_var AMENT_PREFIX_PATH
 _zj_filter_colon_var COLCON_PREFIX_PATH
 _zj_filter_colon_var PKG_CONFIG_PATH
 
+# Overlay build tools such as the Focal-compatible CMake are installed here.
+case ":$PATH:" in
+  *":$HOME/.local/bin:"*) ;;
+  *) export PATH="$HOME/.local/bin:$PATH" ;;
+esac
+
 case "$-" in
   *u*)
     _zj_had_nounset=1

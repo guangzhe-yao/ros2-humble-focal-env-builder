@@ -89,12 +89,42 @@ emit_extra_root_deps_files() {
   done
 }
 
+emit_deb_dependency_names() {
+  local deb="$1"
+  local field deps
+
+  for field in Pre-Depends Depends; do
+    deps="$(dpkg-deb -f "$deb" "$field" 2>/dev/null || true)"
+    printf '%s\n' "$deps" \
+      | tr ',' '\n' \
+      | awk '
+          {
+            sub(/\|.*/, "", $0)
+            sub(/\(.*/, "", $0)
+            gsub(/^[ \t]+|[ \t]+$/, "", $0)
+            split($0, words, /[ \t]+/)
+            if (words[1] != "") print words[1]
+          }
+        '
+  done
+}
+
+emit_artifact_deb_root_deps() {
+  local deb
+  while IFS= read -r -d '' deb; do
+    emit_deb_dependency_names "$deb"
+  done < <(
+    find "$ARTIFACT_DIR" -maxdepth 1 -type f \
+      -name "ros2-humble-focal-desktop-source_*_${PKG_ARCH}.deb" -print0
+  )
+}
+
 emit_extra_deb_root_deps() {
   if [ -z "$EXTRA_APT_DEBS_DIR" ]; then
     return 0
   fi
 
-  local extra_dir deb field deps
+  local extra_dir deb
   local -a extra_deb_dirs=()
   IFS=':' read -r -a extra_deb_dirs <<< "$EXTRA_APT_DEBS_DIR"
   for extra_dir in "${extra_deb_dirs[@]}"; do
@@ -105,20 +135,7 @@ emit_extra_deb_root_deps() {
     fi
     while IFS= read -r -d '' deb; do
       dpkg-deb -f "$deb" Package 2>/dev/null || true
-      for field in Pre-Depends Depends; do
-        deps="$(dpkg-deb -f "$deb" "$field" 2>/dev/null || true)"
-        printf '%s\n' "$deps" \
-          | tr ',' '\n' \
-          | awk '
-              {
-                sub(/\|.*/, "", $0)
-                sub(/\(.*/, "", $0)
-                gsub(/^[ \t]+|[ \t]+$/, "", $0)
-                split($0, words, /[ \t]+/)
-                if (words[1] != "") print words[1]
-              }
-            '
-      done
+      emit_deb_dependency_names "$deb"
     done < <(find "$extra_dir" -maxdepth 1 -type f -name '*.deb' -print0)
   done
 }
@@ -127,6 +144,8 @@ collect_root_deps() {
   log "Collecting root apt dependency package names"
   {
     sed '/^$/d' "$ARTIFACT_DIR/runtime-deps.txt"
+    # The deb control file is authoritative when reusing older artifacts.
+    emit_artifact_deb_root_deps
     if [ "$INCLUDE_DEV_DEPS" = "1" ] && [ -f "$ARTIFACT_DIR/dev-deps.txt" ]; then
       sed '/^$/d' "$ARTIFACT_DIR/dev-deps.txt"
     fi
@@ -584,4 +603,6 @@ main() {
   make_tarball
 }
 
-main "$@"
+if [ "${BASH_SOURCE[0]}" = "$0" ]; then
+  main "$@"
+fi

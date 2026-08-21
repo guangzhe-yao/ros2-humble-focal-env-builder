@@ -118,9 +118,33 @@ check_rosdep_rules() {
   fi
 }
 
+check_overlay_build_tools() {
+  if [ "${VERIFY_OVERLAY_BUILD_TOOLS:-0}" != "1" ]; then
+    return 0
+  fi
+
+  local tool
+  for tool in c++ cmake colcon rosdep; do
+    if ! command -v "$tool" >/dev/null 2>&1; then
+      echo "ERROR: overlay build tool is missing: $tool" >&2
+      return 1
+    fi
+    printf '%s -> %s\n' "$tool" "$(command -v "$tool")"
+  done
+
+  local cmake_version
+  cmake_version="$(cmake --version | awk '/version/ {print $3; exit}')"
+  if ! dpkg --compare-versions "$cmake_version" ge 3.22; then
+    echo "ERROR: CMake >= 3.22 is required for the packaged ros2_control overlay; got $cmake_version" >&2
+    return 1
+  fi
+  echo "overlay CMake version -> $cmake_version"
+}
+
 check_bash_completion
 check_optional_python_tools
 check_rosdep_rules
+check_overlay_build_tools
 
 if ros2 pkg prefix ros2controlcli >/dev/null 2>&1; then
   ros2 control --help >/dev/null
