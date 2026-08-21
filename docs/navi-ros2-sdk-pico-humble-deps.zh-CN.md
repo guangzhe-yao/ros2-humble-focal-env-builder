@@ -27,6 +27,17 @@ colcon build --symlink-install --packages-up-to robot_nodes_cpp robot_nodes_py
   CMake 配置包；运行版 Humble 基础包只需要运行库。
 - `rtipc_runtime`，通常由 `zj-humanoid-rtipc-runtime` deb 提供。
 
+`navi_ros2_sdk` 的 Pico robot 2.0 交付当前锁定：
+
+- 下载地址：`http://10.51.33.211:10000/chfs/shared/modules/rtipc_runtime/release/zj-humanoid-rtipc-runtime_1.4.2focal_amd64.deb`
+- Debian 版本：`1.4.2focal`
+- SHA-256：`ff6653f8725bcb38a3e569bf7daedd4e67da4981ce66f10ff6b979cdef5b2135`
+
+该 vendor deb 属于业务 overlay 依赖，不应编进通用 Humble base。需要离线构建
+Pico robot 时将它放入 `EXTRA_APT_DEBS_DIR`，或使用 `navi_ros2_sdk` 自身的
+`pico-robot-common-deb`。本次 Pico 范围仅包含共享 `navi_robot_msgs`、
+`robot_nodes_cpp` 和 `robot_nodes_py`；不把 Orin 或上下肢业务包并入基础环境。
+
 `src/robot/system_monitor/autoware_system_monitor` 依赖 Autoware 组件
 `autoware_cmake`、`autoware_utils`、`autoware_lint_common`，不属于 Pico 核心
 robot 闭环；不要默认纳入空 Pico 的 robot 编译链路。
