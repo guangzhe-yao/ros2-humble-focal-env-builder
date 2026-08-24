@@ -13,7 +13,7 @@ machines have different Ubuntu releases, mixed PPAs, or incompatible library
 versions, runtime loading can fail.
 
 Mitigation: deploy only to the same OS image family, keep `runtime-deps.txt`,
-and run `scripts/verify_installed_humble_env.sh` after install.
+and run `deploy/pico/verify_installed_humble_env.sh` after install.
 
 2. Absolute paths and RPATH
 
@@ -21,7 +21,7 @@ Source builds can embed build-machine paths in CMake files, Python entry points,
 or ELF RPATH/RUNPATH.
 
 Mitigation: build release artifacts without `--symlink-install`; package from a
-fresh install prefix; let `packaging/build_ros2_humble_bundle.sh` rewrite text
+fresh install prefix; let `builder/package/build_ros2_humble_bundle.sh` rewrite text
 references and ELF RPATHs; verify `ros2 pkg prefix` points to `/opt/ros/humble`.
 
 3. Upstream branch drift

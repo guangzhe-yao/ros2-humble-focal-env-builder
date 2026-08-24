@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-SRC_PREFIX="${SRC_PREFIX:-/home/nav01/ros2_humble/install_deploy}"
-OUT_DIR="${OUT_DIR:-/home/nav01/ros2_humble_deploy}"
+SRC_PREFIX="${SRC_PREFIX:-$HOME/ros2_humble/install_deploy}"
+OUT_DIR="${OUT_DIR:-$HOME/ros2_humble_deploy}"
 PKG_NAME="${PKG_NAME:-ros2-humble-focal-desktop-source}"
 PKG_VERSION="${PKG_VERSION:-0.1.0+$(date +%Y%m%d%H%M)}"
 PKG_ARCH="${PKG_ARCH:-$(dpkg --print-architecture)}"
 MAINTAINER="${MAINTAINER:-nav01 <nav01@localhost>}"
 INSTALL_PREFIX="${INSTALL_PREFIX:-/opt/ros/humble}"
-BUILD_BASE="${BUILD_BASE:-/home/nav01/ros2_humble/build_deploy}"
+BUILD_BASE="${BUILD_BASE:-$HOME/ros2_humble/build_deploy}"
+BUILD_LOG="${BUILD_LOG:-$HOME/ros2_humble/colcon_build_humble_deploy.log}"
 BUILD_DIR="$OUT_DIR/build"
 PKGROOT="$BUILD_DIR/${PKG_NAME}_${PKG_VERSION}_${PKG_ARCH}"
 STAGED_PREFIX="$PKGROOT$INSTALL_PREFIX"
@@ -73,7 +74,7 @@ Source-Prefix: $SRC_PREFIX
 Install-Prefix: $INSTALL_PREFIX
 Ubuntu: $(lsb_release -ds 2>/dev/null || true)
 Architecture: $PKG_ARCH
-ROS-Build-Summary: $(grep -E '^Summary:' /home/nav01/ros2_humble/colcon_build_humble_deploy.log 2>/dev/null | tail -n 1 || true)
+ROS-Build-Summary: $(grep -E '^Summary:' "$BUILD_LOG" 2>/dev/null | tail -n 1 || true)
 EOF
 }
 
@@ -81,6 +82,10 @@ replace_text_reference() {
   local from="$1"
   local to="$2"
   local matches="$BUILD_DIR/text-rewrite-files.txt"
+
+  if [ "$from" = "$to" ]; then
+    return 0
+  fi
 
   grep -RIl --exclude-dir='__pycache__' --exclude='*.pyc' -- "$from" "$STAGED_PREFIX" 2>/dev/null \
     | sort -u > "$matches" || true
@@ -102,6 +107,42 @@ rewrite_text_references() {
   replace_text_reference "$BUILD_BASE/rviz_assimp_vendor/assimp_install" "$INSTALL_PREFIX/opt/rviz_assimp_vendor"
   replace_text_reference "$BUILD_BASE/console_bridge_vendor/console_bridge_vendor_install" "$INSTALL_PREFIX"
   replace_text_reference "$BUILD_BASE/google_benchmark_vendor/google_benchmark_vendor_install" "$INSTALL_PREFIX"
+}
+
+normalize_parent_prefix_paths() {
+  log "Normalizing ament parent-prefix index"
+  local index_dir="$STAGED_PREFIX/share/ament_index/resource_index/parent_prefix_path"
+  [ -d "$index_dir" ] || return 0
+
+  local file content entry mapped normalized
+  local -A seen=()
+  local -a entries=()
+  while IFS= read -r -d '' file; do
+    content="$(<"$file")"
+    normalized=""
+    seen=()
+    entries=()
+    IFS=':' read -r -a entries <<< "$content"
+    for entry in "${entries[@]}"; do
+      [ -z "$entry" ] && continue
+      mapped="$entry"
+      case "$entry" in
+        /home/*|*/install_deploy|*/install_deploy/*)
+          mapped="$INSTALL_PREFIX"
+          ;;
+      esac
+      if [ "${seen[$mapped]+set}" = "set" ]; then
+        continue
+      fi
+      seen["$mapped"]=1
+      if [ -z "$normalized" ]; then
+        normalized="$mapped"
+      else
+        normalized="$normalized:$mapped"
+      fi
+    done
+    printf '%s' "$normalized" > "$file"
+  done < <(find "$index_dir" -type f -print0)
 }
 
 write_single_prefix_setup_scripts() {
@@ -198,19 +239,51 @@ EOF
 
 rewrite_one_rpath() {
   local elf="$1"
-  local rpath new_rpath
+  local rpath new_rpath entry mapped suffix
+  local -A seen=()
+  local -a rpath_entries=()
 
   rpath="$(patchelf --print-rpath "$elf" 2>/dev/null || true)"
   if [ -z "$rpath" ]; then
     return 0
   fi
 
-  new_rpath="$rpath"
-  new_rpath="${new_rpath//"$SRC_PREFIX"/"$INSTALL_PREFIX"}"
-  new_rpath="${new_rpath//"$BUILD_BASE/rviz_ogre_vendor/ogre_install"/"$INSTALL_PREFIX/opt/rviz_ogre_vendor"}"
-  new_rpath="${new_rpath//"$BUILD_BASE/rviz_assimp_vendor/assimp_install"/"$INSTALL_PREFIX/opt/rviz_assimp_vendor"}"
-  new_rpath="${new_rpath//"$BUILD_BASE/console_bridge_vendor/console_bridge_vendor_install"/"$INSTALL_PREFIX"}"
-  new_rpath="${new_rpath//"$BUILD_BASE/google_benchmark_vendor/google_benchmark_vendor_install"/"$INSTALL_PREFIX"}"
+  new_rpath=""
+  IFS=':' read -r -a rpath_entries <<< "$rpath"
+  for entry in "${rpath_entries[@]}"; do
+    [ -z "$entry" ] && continue
+    mapped="$entry"
+    case "$entry" in
+      "$BUILD_BASE/rviz_ogre_vendor/ogre_install"*)
+        suffix="${entry#"$BUILD_BASE/rviz_ogre_vendor/ogre_install"}"
+        mapped="$INSTALL_PREFIX/opt/rviz_ogre_vendor$suffix"
+        ;;
+      "$BUILD_BASE/rviz_assimp_vendor/assimp_install"*)
+        suffix="${entry#"$BUILD_BASE/rviz_assimp_vendor/assimp_install"}"
+        mapped="$INSTALL_PREFIX/opt/rviz_assimp_vendor$suffix"
+        ;;
+      */install_deploy)
+        mapped="$INSTALL_PREFIX"
+        ;;
+      */install_deploy/*)
+        suffix="${entry#*/install_deploy}"
+        mapped="$INSTALL_PREFIX$suffix"
+        ;;
+      /home/*)
+        # Build-tree RPATH entries must not be shipped to another Pico.
+        continue
+        ;;
+    esac
+    if [ "${seen[$mapped]+set}" = "set" ]; then
+      continue
+    fi
+    seen["$mapped"]=1
+    if [ -z "$new_rpath" ]; then
+      new_rpath="$mapped"
+    else
+      new_rpath="$new_rpath:$mapped"
+    fi
+  done
 
   if [ "$new_rpath" != "$rpath" ]; then
     patchelf --set-rpath "$new_rpath" "$elf"
@@ -235,10 +308,46 @@ rewrite_elf_rpaths() {
   log "Patched RPATH/RUNPATH in $(wc -l < "$BUILD_DIR/patched-rpaths.txt") ELF files"
 }
 
+validate_relocated_install_space() {
+  log "Checking for build-host path references"
+  local text_refs="$BUILD_DIR/build-host-text-references.txt"
+  local link_refs="$BUILD_DIR/build-host-symlink-references.txt"
+  local rpath_refs="$BUILD_DIR/build-host-rpath-references.txt"
+  : > "$text_refs"
+  : > "$link_refs"
+  : > "$rpath_refs"
+
+  grep -RIl --binary-files=without-match \
+    --exclude-dir='__pycache__' --exclude='*.pyc' \
+    -E '/home/[^/]+/(ros2_humble|ros2-humble|jenkins_workspace)' \
+    "$STAGED_PREFIX" 2>/dev/null | sort -u > "$text_refs" || true
+
+  find "$STAGED_PREFIX" -type l -lname '/home/*' -print \
+    | sort -u > "$link_refs"
+
+  local elf rpath
+  while IFS= read -r elf; do
+    rpath="$(patchelf --print-rpath "$elf" 2>/dev/null || true)"
+    if [[ "$rpath" == *"/home/"* ]]; then
+      printf '%s: %s\n' "$elf" "$rpath" >> "$rpath_refs"
+    fi
+  done < "$BUILD_DIR/elf-files-for-rpath.txt"
+
+  if [ -s "$text_refs" ] || [ -s "$link_refs" ] || [ -s "$rpath_refs" ]; then
+    echo "Build-host paths remain in the relocated install space:" >&2
+    sed 's/^/  text: /' "$text_refs" >&2
+    sed 's/^/  link: /' "$link_refs" >&2
+    sed 's/^/  rpath: /' "$rpath_refs" >&2
+    exit 1
+  fi
+}
+
 relocate_install_space() {
   rewrite_text_references
+  normalize_parent_prefix_paths
   write_single_prefix_setup_scripts
   rewrite_elf_rpaths
+  validate_relocated_install_space
 }
 
 write_manual_deps() {
@@ -247,6 +356,7 @@ bash
 bash-completion
 ca-certificates
 curl
+dbus-user-session
 libacl1
 libassimp5
 libcwiid1
@@ -502,7 +612,7 @@ MARKERS_TAR="\$SCRIPT_DIR/$marker_tar_name"
 ROSDEP_RULES="\$SCRIPT_DIR/$ROSDEP_RULES_BASENAME"
 INSTALL_PREFIX="$INSTALL_PREFIX"
 ROSDEP_INDEX_URL_FILE="/etc/ros/rosdep/rosdistro_index_url"
-DDS_ASSET_DIR="\$SCRIPT_DIR/orin_pico_cyclonedds"
+DDS_ASSET_DIR="\$SCRIPT_DIR/pico"
 INSTALL_APT_DEPS="\${INSTALL_APT_DEPS:-1}"
 RUN_ROSDEP_UPDATE="\${RUN_ROSDEP_UPDATE:-1}"
 
@@ -577,7 +687,7 @@ RULEEOF
   fi
 }
 
-install_pico_cyclonedds_assets() {
+install_pico_runtime_assets() {
   if [ ! -d "\$DDS_ASSET_DIR" ]; then
     return 0
   fi
@@ -746,7 +856,7 @@ if [ -f "\$MARKERS_TAR" ]; then
   install_deb_or_fix_deps "\$marker_tmp"/*/*.deb
 fi
 install_rosdep_rules
-install_pico_cyclonedds_assets
+install_pico_runtime_assets
 
 cat <<MSG
 
@@ -893,7 +1003,7 @@ Built from source on Ubuntu 20.04 amd64.
 - \`dev-deps.txt\`: optional overlay build tool dependency package list
 - \`install_ros2_humble.sh\`: guarded installer for clean machines
 - \`install_ros2_humble_markers.sh\`: marker-only installer for a machine where the main bundle is already installed
-- \`orin_pico_cyclonedds/\`: fixed Orin/Pico CycloneDDS XML, DDS sysctl tuning, and link-test tool
+- \`pico/\`: Pico CycloneDDS XML, DDS sysctl tuning, environment loader, and link-test tool
 
 ## Install
 
@@ -906,7 +1016,7 @@ source /etc/profile.d/ros2_humble_cyclone.sh
 The installer refuses to run if existing \`ros-humble-*\` Debian packages or a
 non-empty \`$INSTALL_PREFIX\` are present.
 
-When \`orin_pico_cyclonedds/\` is present, the installer also writes:
+When \`pico/\` is present, the installer also writes:
 
 \`\`\`text
 /etc/ros/cyclonedds/pico-cyclonedds.xml
@@ -1005,4 +1115,6 @@ main() {
   ls -lh "$ARTIFACT_DIR"
 }
 
-main "$@"
+if [ "${BASH_SOURCE[0]}" = "$0" ]; then
+  main "$@"
+fi

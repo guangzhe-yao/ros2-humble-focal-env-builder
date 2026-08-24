@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 UNIFIED_PREFIX="${UNIFIED_PREFIX:-$HOME/ros2_humble_unified/install_deploy}"
 OUT_DIR="${OUT_DIR:-$HOME/ros2_humble_unified/package_out}"
+OFFLINE_OUT_DIR="${OFFLINE_OUT_DIR:-$OUT_DIR/artifacts/offline}"
 BUILD_BASE="${BUILD_BASE:-$HOME/ros2_humble/build_deploy}"
 PROFILE="${PROFILE:-$REPO_ROOT/profiles/third_party.lock.repos}"
 SOURCE_LOCK="${SOURCE_LOCK:-$OUT_DIR/source-lock.repos}"
@@ -33,17 +34,19 @@ copy_artifact_metadata() {
   cp "$PROFILE" "$artifacts/third_party.repos"
   if [ -f "$SOURCE_LOCK" ]; then
     cp "$SOURCE_LOCK" "$artifacts/source-lock.repos"
+  else
+    cp "$PROFILE" "$artifacts/source-lock.repos"
   fi
-  cp "$REPO_ROOT/scripts/verify_installed_humble_env.sh" "$artifacts/verify_installed_humble_env.sh"
+  cp "$REPO_ROOT/deploy/pico/verify_installed_humble_env.sh" "$artifacts/verify_installed_humble_env.sh"
   chmod 0755 "$artifacts/verify_installed_humble_env.sh"
 
-  if [ -d "$REPO_ROOT/deploy/orin_pico_cyclonedds" ]; then
-    mkdir -p "$artifacts/orin_pico_cyclonedds"
+  if [ -d "$REPO_ROOT/deploy/pico" ]; then
+    mkdir -p "$artifacts/pico"
     rsync -a --delete \
       --exclude '__pycache__/' \
       --exclude '*.pyc' \
-      "$REPO_ROOT/deploy/orin_pico_cyclonedds/" \
-      "$artifacts/orin_pico_cyclonedds/"
+      "$REPO_ROOT/deploy/pico/" \
+      "$artifacts/pico/"
   fi
 }
 
@@ -56,14 +59,15 @@ main() {
   PKG_VERSION="$PKG_VERSION" \
   INSTALL_PREFIX="$INSTALL_PREFIX" \
   BUILD_BASE="$BUILD_BASE" \
-  "$REPO_ROOT/packaging/build_ros2_humble_bundle.sh"
+  "$REPO_ROOT/builder/package/build_ros2_humble_bundle.sh"
 
   copy_artifact_metadata
 
   if [ "$BUILD_OFFLINE_BUNDLE" = "1" ]; then
     log "Building offline deploy bundle"
     ARTIFACT_DIR="$OUT_DIR/artifacts" \
-      "$REPO_ROOT/packaging/build_offline_humble_bundle.sh"
+      OUT_DIR="$OFFLINE_OUT_DIR" \
+      "$REPO_ROOT/builder/package/build_offline_humble_bundle.sh"
   fi
 
   log "Done. Artifacts are under: $OUT_DIR/artifacts"

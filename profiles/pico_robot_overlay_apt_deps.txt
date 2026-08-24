@@ -5,7 +5,7 @@
 #   INCLUDE_DEV_DEPS=1 \
 #   EXTRA_APT_ROOT_DEPS_FILE="$PWD/profiles/pico_robot_overlay_apt_deps.txt" \
 #   BUILD_OFFLINE_BUNDLE=1 \
-#   ./packaging/repackage_existing_humble_artifacts.sh
+#   ./builder/package/repackage_existing_humble_artifacts.sh
 chrony
 libboost-filesystem-dev
 libboost-regex-dev

@@ -79,7 +79,7 @@ INCLUDE_DEV_DEPS=1 \
 EXTRA_APT_ROOT_DEPS_FILE="$PWD/profiles/pico_robot_overlay_apt_deps.txt" \
 EXTRA_APT_DEBS_DIR=/path/to/vendor-debs \
 BUILD_OFFLINE_BUNDLE=1 \
-./packaging/repackage_existing_humble_artifacts.sh
+./builder/package/repackage_existing_humble_artifacts.sh
 ```
 
 `EXTRA_APT_DEBS_DIR` 支持用冒号分隔多个 deb 目录；打包脚本会自动读取这些 deb

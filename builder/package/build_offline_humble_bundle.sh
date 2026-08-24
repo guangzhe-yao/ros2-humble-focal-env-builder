@@ -538,7 +538,7 @@ write_readme() {
   cat > "$BUNDLE_ROOT/README_OFFLINE.zh-CN.md" <<EOF
 # ROS 2 Humble Focal 离线安装包
 
-这个目录由 \`packaging/build_offline_humble_bundle.sh\` 生成，用于同型号
+这个目录由 \`builder/package/build_offline_humble_bundle.sh\` 生成，用于同型号
 Ubuntu 20.04 amd64 Pico 离线安装 ROS 2 Humble 前置环境。
 
 ## 安装

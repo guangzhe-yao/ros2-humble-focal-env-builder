@@ -63,7 +63,7 @@ such as simulation demos in the cache.
 On `nav01@172.16.11.164`:
 
 ```bash
-cd ~/Desktop/jenkins/ros2-humble-focal-env-builder
+cd ~/ros2-humble-focal-env-builder
 export PATH="$HOME/.local/bin:$PATH"
 
 SOURCE_CACHE_DIR="$HOME/ros2_humble_source_cache" \
@@ -71,7 +71,7 @@ PROFILE="$PWD/profiles/third_party.repos" \
 BASE_PREFIX="$HOME/ros2_humble/install_deploy" \
 WORK_DIR="$HOME/ros2_humble_unified" \
 PKG_VERSION="0.3.0+$(date +%Y%m%d%H%M)" \
-./scripts/build_unified_humble_env.sh
+./builder/build_unified_humble_env.sh
 ```
 
 The script performs:
@@ -103,7 +103,7 @@ Check important packages against the unified prefix:
 
 ```bash
 INSTALL_PREFIX="$HOME/ros2_humble_unified/install_deploy" \
-  ~/Desktop/jenkins/ros2-humble-focal-env-builder/scripts/verify_installed_humble_env.sh
+  ~/ros2-humble-focal-env-builder/deploy/pico/verify_installed_humble_env.sh
 ```
 
 Run module-specific tests as well. A successful colcon build is necessary but

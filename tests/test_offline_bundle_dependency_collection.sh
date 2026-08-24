@@ -29,8 +29,8 @@ EOF
 dpkg-deb --build --root-owner-group "$PKGROOT" \
   "$ARTIFACT_DIR/ros2-humble-focal-desktop-source_1.0.0_${PKG_ARCH}.deb" >/dev/null
 
-# shellcheck source=../packaging/build_offline_humble_bundle.sh
-source "$REPO_ROOT/packaging/build_offline_humble_bundle.sh"
+# shellcheck source=../builder/package/build_offline_humble_bundle.sh
+source "$REPO_ROOT/builder/package/build_offline_humble_bundle.sh"
 collect_root_deps
 
 grep -Fxq bash "$DEPS_ROOT_FILE"

@@ -352,7 +352,7 @@ build_unified_artifacts() {
   ROSDEP_SKIP_KEYS="$ROSDEP_SKIP_KEYS" \
   COLCON_PACKAGES_ARGS="$THIRD_PARTY_COLCON_PACKAGES_ARGS" \
   COLCON_CMAKE_ARGS="$THIRD_PARTY_COLCON_CMAKE_ARGS" \
-  "$REPO_ROOT/scripts/build_unified_humble_env.sh"
+  "$REPO_ROOT/builder/build_unified_humble_env.sh"
 }
 
 remove_existing_install_if_requested() {
@@ -411,7 +411,7 @@ Third-party package list:
   $PROFILE
 
 To evaluate new third-party packages, edit profiles/third_party.repos and run:
-  PROFILE="\$PWD/profiles/third_party.repos" ./scripts/bootstrap_humble_focal_env.sh
+  PROFILE="\$PWD/profiles/third_party.repos" ./builder/bootstrap_humble_focal_env.sh
 
 EOF
 }

@@ -242,26 +242,27 @@ package_unified_prefix() {
   PKG_VERSION="$PKG_VERSION" \
   INSTALL_PREFIX="$INSTALL_PREFIX" \
   BUILD_BASE="$BUILD_BASE" \
-  "$REPO_ROOT/packaging/build_ros2_humble_bundle.sh"
+  "$REPO_ROOT/builder/package/build_ros2_humble_bundle.sh"
 
   cp "$PROFILE" "$OUT_DIR/artifacts/third_party.repos"
   cp "$OUT_DIR/source-lock.repos" "$OUT_DIR/artifacts/source-lock.repos"
-  cp "$REPO_ROOT/scripts/verify_installed_humble_env.sh" "$OUT_DIR/artifacts/verify_installed_humble_env.sh"
+  cp "$REPO_ROOT/deploy/pico/verify_installed_humble_env.sh" "$OUT_DIR/artifacts/verify_installed_humble_env.sh"
   chmod 0755 "$OUT_DIR/artifacts/verify_installed_humble_env.sh"
 
-  if [ -d "$REPO_ROOT/deploy/orin_pico_cyclonedds" ]; then
-    mkdir -p "$OUT_DIR/artifacts/orin_pico_cyclonedds"
+  if [ -d "$REPO_ROOT/deploy/pico" ]; then
+    mkdir -p "$OUT_DIR/artifacts/pico"
     rsync -a --delete \
       --exclude '__pycache__/' \
       --exclude '*.pyc' \
-      "$REPO_ROOT/deploy/orin_pico_cyclonedds/" \
-      "$OUT_DIR/artifacts/orin_pico_cyclonedds/"
+      "$REPO_ROOT/deploy/pico/" \
+      "$OUT_DIR/artifacts/pico/"
   fi
 
   if [ "$BUILD_OFFLINE_BUNDLE" = "1" ]; then
     log "Building offline deploy bundle"
     ARTIFACT_DIR="$OUT_DIR/artifacts" \
-      "$REPO_ROOT/packaging/build_offline_humble_bundle.sh"
+      OUT_DIR="$OUT_DIR/artifacts/offline" \
+      "$REPO_ROOT/builder/package/build_offline_humble_bundle.sh"
   fi
 }
 
