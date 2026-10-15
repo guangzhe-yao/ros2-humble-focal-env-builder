@@ -156,13 +156,13 @@ collect_root_deps() {
 }
 
 copy_extra_apt_debs() {
-  if [ -z "$EXTRA_APT_DEBS_DIR" ]; then
+  if [ -z "$EXTRA_APT_DEBS_DIR${CACHED_APT_DEBS_DIR:-}" ]; then
     return 0
   fi
 
   local extra_dir
   local -a extra_deb_dirs=()
-  IFS=':' read -r -a extra_deb_dirs <<< "$EXTRA_APT_DEBS_DIR"
+  IFS=':' read -r -a extra_deb_dirs <<< "${CACHED_APT_DEBS_DIR:-}:$EXTRA_APT_DEBS_DIR"
   for extra_dir in "${extra_deb_dirs[@]}"; do
     [ -z "$extra_dir" ] && continue
     if [ ! -d "$extra_dir" ]; then
@@ -243,11 +243,27 @@ download_apt_debs() {
   : > "$APT_DOWNLOAD_ERRORS_FILE"
   : > "$VIRTUAL_DEPS_FILE"
   copy_extra_apt_debs
+  # Local/vendor packages often have no downloadable apt candidate. Their
+  # metadata is authoritative; the final offline solver checks constraints.
+  local supplied_deb supplied_name
+  declare -A supplied_packages=()
+  while IFS= read -r -d '' supplied_deb; do
+    supplied_name="$(dpkg-deb -f "$supplied_deb" Package)"
+    supplied_packages["$supplied_name"]=1
+    while IFS= read -r supplied_name; do
+      [[ -z "$supplied_name" ]] || supplied_packages["$supplied_name"]=1
+    done < <(dpkg-deb -f "$supplied_deb" Provides | tr ',' '\n' | awk '{print $1}')
+  done < <(find "$APT_DEBS_DIR" -maxdepth 1 -name '*.deb' -print0)
   pushd "$APT_DEBS_DIR" >/dev/null
 
   local attempt candidate pkg
   while IFS= read -r pkg; do
     [ -z "$pkg" ] && continue
+    local lookup_name="${pkg%:any}"
+    lookup_name="${lookup_name%:amd64}"
+    if [[ -n "${supplied_packages[$lookup_name]+present}" ]]; then
+      continue
+    fi
     candidate="$(apt-cache policy "$pkg" 2>/dev/null | awk '/Candidate:/ {print $2; exit}' || true)"
     if [ -z "$candidate" ] || [ "$candidate" = "(none)" ]; then
       if [ "$pkg" = "libignition-math6" ] && [ "$ENABLE_OSRF_GAZEBO_SOURCE" = "1" ]; then
@@ -283,7 +299,7 @@ download_apt_debs() {
     filtered_missing="$(mktemp)"
     sort -u "$MISSING_DEPS_FILE" | while IFS= read -r pkg; do
       case "$pkg" in
-        awk|dbus-session-bus|debconf-2.0|default-dbus-session-bus|fonts-freefont|gsettings-backend|libblas.so.3|liblapack.so.3|libopencl-1.1-1|libopencl-1.2-1|libopencl1|python3:any|python3.8:any|qtbase-abi-*|qtdeclarative-abi-*)
+        awk|dbus-session-bus|debconf-2.0|default-dbus-session-bus|fonts-freefont|gsettings-backend|libblas.so.3|liblapack.so.3|libopencl-1.1-1|libopencl-1.2-1|libopencl1|python3:any|python3.8:any|qtbase-abi-*|qtdeclarative-abi-*|time-daemon)
           printf '%s\n' "$pkg" >> "$VIRTUAL_DEPS_FILE"
           continue
           ;;
@@ -346,20 +362,9 @@ download_osrf_gazebo_deb() {
 write_apt_repo_index() {
   log "Writing local apt repository index"
   pushd "$APT_DEBS_DIR" >/dev/null
-  : > Packages
-
-  local deb
-  for deb in ./*.deb; do
-    [ -f "$deb" ] || continue
-    dpkg-deb -f "$deb" >> Packages
-    {
-      printf 'Filename: %s\n' "$deb"
-      printf 'Size: %s\n' "$(stat -c '%s' "$deb")"
-      printf 'MD5sum: %s\n' "$(md5sum "$deb" | awk '{print $1}')"
-      printf 'SHA256: %s\n' "$(sha256sum "$deb" | awk '{print $1}')"
-      printf '\n'
-    } >> Packages
-  done
+  # Parse control records rather than concatenate them: vendor controls may
+  # contain trailing blank lines which would split Filename into a new record.
+  dpkg-scanpackages --multiversion . /dev/null > Packages
   gzip -kf Packages
   popd >/dev/null
 }

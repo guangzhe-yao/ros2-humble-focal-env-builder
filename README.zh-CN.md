@@ -5,7 +5,22 @@
 本仓库只负责 Ubuntu 20.04 focal amd64 Pico 的 ROS 2 Humble 环境：构建、出包、
 离线部署和验证。Orin 使用 Ubuntu 22.04 与现有 Docker，不在本仓库部署范围内。
 
-## 当前基线
+## 最新离线 Release
+
+2026-10-15 版本：基础环境 `0.3.2+20261015`，包含 robot-state、lowerlimb、
+指定上肢包及离线依赖。完整压缩包交付在 `release/pico/`，不纳入 Git 源码历史。
+查看[版本与校验清单](release/pico/robot-delivery-20261015.json)、
+[安装说明](deploy/pico/robot_delivery_README.md)及[验证记录](docs/robot-delivery-20261015.md)。
+
+```bash
+bash release/pico/install.sh --check
+# 停机维护后安装，不自动启动 SDK 或控制节点：
+bash release/pico/install.sh --install
+```
+
+入口优先选择新的整合包，默认只检查；旧基础包的回退入口保持原安装行为。
+
+## 历史基线
 
 已在 Pico `nav01@172.16.10.245` 验证：
 

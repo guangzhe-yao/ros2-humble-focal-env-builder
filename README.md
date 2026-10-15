@@ -6,6 +6,16 @@ This repository builds, packages, deploys, and verifies ROS 2 Humble for Ubuntu
 20.04 focal amd64 Pico machines. Orin runs Ubuntu 22.04 with an existing Docker
 environment and is intentionally outside this repository's deployment scope.
 
+## Current Robot Release
+
+The 2026-10-15 combined offline release uses base `0.3.2+20261015` and includes
+robot-state, lowerlimb and the specified vendor dependencies. See the
+[release manifest](release/pico/robot-delivery-20261015.json) and
+[installation guide](deploy/pico/robot_delivery_README.md).
+The archive is delivered separately under `release/pico/`, not committed to Git.
+`bash release/pico/install.sh --check` selects this newer bundle;
+`bash release/pico/install.sh --install` installs it and verifies package linkage.
+
 ## Layout
 
 ```text
@@ -36,6 +46,10 @@ Copy the complete `release/pico/` directory to the target and run:
 cd release/pico
 ./install.sh
 ```
+
+For the new combined release this defaults to a check only; use `--install`
+after stopping robot control for maintenance. The legacy base-only fallback
+retains its old installation behavior.
 
 The deployment machine does not need network access. The bundle may be launched
 from any directory; it installs to `/opt/ros/humble` and requires Ubuntu 20.04

@@ -9,6 +9,8 @@ artifacts/
 *.tar.gz
 release/pico/*.tar.gz.sha256
 release/pico/ros2-humble-focal-offline-bundle_*_amd64/
+release/pico/robot-humble-focal-offline-*-amd64/
+release/pico/robot-humble-focal-offline-*-amd64.tar.gz.sha256
 *.log
 *.tmp
 __pycache__/

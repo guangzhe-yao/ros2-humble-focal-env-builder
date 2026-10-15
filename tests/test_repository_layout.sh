@@ -26,12 +26,11 @@ for obsolete in scripts packaging offline_artifacts deploy/orin_pico_cyclonedds;
   fi
 done
 
-if grep -RInE \
+# Generated DEB inventories and validation logs contain legitimate upstream
+# paths; inspect repository sources, not ignored release payloads.
+if git -C "$REPO_ROOT" grep --untracked --exclude-standard -nE \
     'scripts/|packaging/|offline_artifacts|deploy/orin_pico_cyclonedds' \
-    "$REPO_ROOT" \
-    --exclude-dir=.git \
-    --exclude='*.repos' \
-    --exclude='test_repository_layout.sh'; then
+    -- . ':!*.repos' ':!tests/test_repository_layout.sh'; then
   echo "Obsolete path reference found" >&2
   exit 1
 fi

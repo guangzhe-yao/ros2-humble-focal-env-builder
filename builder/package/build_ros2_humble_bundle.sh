@@ -64,6 +64,11 @@ copy_install_space() {
     --exclude '*.pyc' \
     "$SRC_PREFIX/" "$STAGED_PREFIX/"
 
+  # Business interfaces must be owned by their own DEBs, not the ROS underlay.
+  python3 "$(dirname "${BASH_SOURCE[0]}")/prune_business_packages.py" \
+    "$STAGED_PREFIX" navi_robot_msgs robot_nodes_py \
+    > "$ARTIFACT_DIR/excluded-business-files.txt"
+
   mkdir -p "$STAGED_PREFIX/share/ros2_humble_source_build"
   cat > "$STAGED_PREFIX/share/ros2_humble_source_build/BUILD_INFO" <<EOF
 Package: $PKG_NAME
@@ -563,7 +568,7 @@ PY
   while IFS=$'\t' read -r ros_name deb_name ros_version; do
     [ -z "$deb_name" ] && continue
     local marker_root="$BUILD_DIR/marker-root-$deb_name"
-    local marker_version="${ros_version}-9999focaldummy1"
+    local marker_version="${ros_version}-9999focaldummy1+${PKG_VERSION}"
     rm -rf "$marker_root"
     mkdir -p "$marker_root/DEBIAN" "$marker_root/usr/share/doc/$deb_name"
     cat > "$marker_root/DEBIAN/control" <<EOF
