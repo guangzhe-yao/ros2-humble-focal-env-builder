@@ -6,6 +6,16 @@ import re
 import shutil
 
 
+def validate_environment(prefix, allowlist):
+    allowed = set(Path(allowlist).read_text().splitlines())
+    index = Path(prefix) / 'share/ament_index/resource_index/packages'
+    actual = {path.name for path in index.iterdir()}
+    unexpected = sorted(actual - allowed)
+    if unexpected:
+        raise ValueError('Use a clean Humble prefix; unexpected overlay packages: '
+                         + ', '.join(unexpected))
+
+
 def prune(prefix, packages):
     prefix = Path(prefix)
     if prefix.resolve() == Path('/opt/ros/humble'):
@@ -37,6 +47,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('prefix')
     parser.add_argument('packages', nargs='+')
+    parser.add_argument('--allowlist')
     args = parser.parse_args()
     for removed in prune(args.prefix, args.packages):
         print(removed)
+    if args.allowlist:
+        validate_environment(args.prefix, args.allowlist)

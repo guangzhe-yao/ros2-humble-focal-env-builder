@@ -6,11 +6,10 @@ OUT_DIR="${OUT_DIR:-$ARTIFACT_DIR/offline}"
 BUNDLE_VERSION="${BUNDLE_VERSION:-$(date +%Y%m%d%H%M)}"
 PKG_ARCH="${PKG_ARCH:-$(dpkg --print-architecture)}"
 BUNDLE_NAME="${BUNDLE_NAME:-ros2-humble-focal-offline-bundle_${BUNDLE_VERSION}_${PKG_ARCH}}"
-INCLUDE_DEV_DEPS="${INCLUDE_DEV_DEPS:-0}"
+INCLUDE_DEV_DEPS="${INCLUDE_DEV_DEPS:-1}"
 APT_INCLUDE_RECOMMENDS="${APT_INCLUDE_RECOMMENDS:-0}"
 APT_DOWNLOAD_TIMEOUT="${APT_DOWNLOAD_TIMEOUT:-300}"
 APT_DOWNLOAD_RETRIES="${APT_DOWNLOAD_RETRIES:-3}"
-FAIL_ON_MISSING_APT_DEBS="${FAIL_ON_MISSING_APT_DEBS:-0}"
 ENABLE_OSRF_GAZEBO_SOURCE="${ENABLE_OSRF_GAZEBO_SOURCE:-1}"
 OSRF_GAZEBO_APT_SOURCE="${OSRF_GAZEBO_APT_SOURCE:-deb [trusted=yes] http://packages.osrfoundation.org/gazebo/ubuntu-stable focal main}"
 APT_EXCLUDED_PACKAGES_REGEX="${APT_EXCLUDED_PACKAGES_REGEX:-^(python3-rosdep|python3-rosdep2)$}"
@@ -22,7 +21,7 @@ APT_DEBS_DIR="$BUNDLE_ROOT/apt_debs"
 BUNDLE_ARTIFACT_DIR="$BUNDLE_ROOT/artifacts"
 DEPS_ROOT_FILE="$BUNDLE_ROOT/apt-root-deps.txt"
 DEPS_CLOSURE_FILE="$BUNDLE_ROOT/apt-closure-deps.txt"
-MISSING_DEPS_FILE="$BUNDLE_ROOT/apt-missing-deps.txt"
+MISSING_DEPS_FILE="$BUNDLE_ROOT/apt-unavailable-candidates.txt"
 APT_DOWNLOAD_ERRORS_FILE="$BUNDLE_ROOT/apt-download-errors.log"
 VIRTUAL_DEPS_FILE="$BUNDLE_ROOT/apt-virtual-deps.txt"
 
@@ -44,10 +43,12 @@ require_focal_amd64() {
 
 require_artifacts() {
   local missing=()
-  [ -x "$ARTIFACT_DIR/install_ros2_humble.sh" ] || missing+=("$ARTIFACT_DIR/install_ros2_humble.sh")
   compgen -G "$ARTIFACT_DIR/ros2-humble-focal-desktop-source_*_${PKG_ARCH}.deb" >/dev/null || missing+=("main ros2-humble deb")
   compgen -G "$ARTIFACT_DIR/ros-humble-package-markers_*_${PKG_ARCH}.tar.gz" >/dev/null || missing+=("marker tar")
   [ -f "$ARTIFACT_DIR/runtime-deps.txt" ] || missing+=("$ARTIFACT_DIR/runtime-deps.txt")
+  if [[ "$INCLUDE_DEV_DEPS" == 1 && ! -f "$ARTIFACT_DIR/dev-deps.txt" ]]; then
+    missing+=("$ARTIFACT_DIR/dev-deps.txt")
+  fi
 
   if [ "${#missing[@]}" -gt 0 ]; then
     echo "Missing generated artifacts:" >&2
@@ -55,20 +56,23 @@ require_artifacts() {
     exit 1
   fi
 
-  if ! grep -Fq 'INSTALL_APT_DEPS' "$ARTIFACT_DIR/install_ros2_humble.sh"; then
-    echo "The installer under $ARTIFACT_DIR is from an older artifact set and does not support offline mode." >&2
-    echo "Regenerate artifacts with the current repository before building an offline bundle." >&2
-    exit 1
-  fi
 }
 
 prepare_bundle_root() {
   log "Preparing offline bundle root: $BUNDLE_ROOT"
   rm -rf "$BUNDLE_ROOT"
   mkdir -p "$APT_DEBS_DIR" "$BUNDLE_ARTIFACT_DIR"
-  rsync -a --delete \
-    --exclude 'offline/' \
-    "$ARTIFACT_DIR/" "$BUNDLE_ARTIFACT_DIR/"
+  cp "$ARTIFACT_DIR"/ros2-humble-focal-desktop-source_*_"$PKG_ARCH".deb "$APT_DEBS_DIR/"
+  local marker_temp metadata
+  marker_temp="$(mktemp -d)"
+  for metadata in "$ARTIFACT_DIR"/ros-humble-package-markers_*_"$PKG_ARCH".tar.gz; do
+    tar -xzf "$metadata" -C "$marker_temp"
+  done
+  find "$marker_temp" -type f -name '*.deb' -exec cp -t "$APT_DEBS_DIR" {} +
+  rm -rf "$marker_temp"
+  for metadata in runtime-deps.txt dev-deps.txt source-lock.repos third_party.repos rosdep-humble-focal-source-build.yaml; do
+    [[ ! -f "$ARTIFACT_DIR/$metadata" ]] || cp "$ARTIFACT_DIR/$metadata" "$BUNDLE_ARTIFACT_DIR/"
+  done
 }
 
 emit_extra_root_deps_files() {
@@ -156,22 +160,45 @@ collect_root_deps() {
 }
 
 copy_extra_apt_debs() {
-  if [ -z "$EXTRA_APT_DEBS_DIR${CACHED_APT_DEBS_DIR:-}" ]; then
-    return 0
-  fi
+  local directory deb name provided wanted
+  local -a directories=()
+  declare -A required=()
+  while IFS= read -r name; do
+    name="${name%:any}"; name="${name%:amd64}"
+    [[ -z "$name" ]] || required["$name"]=1
+  done < "$DEPS_CLOSURE_FILE"
+  IFS=':' read -r -a directories <<< "${CACHED_APT_DEBS_DIR:-}"
+  for directory in "${directories[@]}"; do
+    [[ -z "$directory" ]] && continue
+    [[ -d "$directory" ]] || { echo "Missing cache: $directory" >&2; return 1; }
+    while IFS= read -r -d '' deb; do
+      name="$(dpkg-deb -f "$deb" Package)"
+      # Cached robot releases must never reintroduce business/vendor packages.
+      case "$name" in zj-*|robotpkg-*|ros-*|ros2-*) continue;; esac
+      wanted="${required[$name]:-}"
+      while IFS= read -r provided; do
+        [[ -z "$provided" ]] || wanted="$wanted${required[$provided]:-}"
+      done < <(dpkg-deb -f "$deb" Provides | tr ',' '\n' | awk '{print $1}')
+      [[ -z "$wanted" ]] || cp "$deb" "$APT_DEBS_DIR/"
+    done < <(find "$directory" -maxdepth 1 -name '*.deb' -print0)
+  done
+  IFS=':' read -r -a directories <<< "$EXTRA_APT_DEBS_DIR"
+  for directory in "${directories[@]}"; do
+    [[ -z "$directory" ]] && continue
+    [[ -d "$directory" ]] || { echo "Missing DEB directory: $directory" >&2; return 1; }
+    find "$directory" -maxdepth 1 -type f -name '*.deb' -exec cp -t "$APT_DEBS_DIR" {} +
+  done
+}
 
-  local extra_dir
-  local -a extra_deb_dirs=()
-  IFS=':' read -r -a extra_deb_dirs <<< "${CACHED_APT_DEBS_DIR:-}:$EXTRA_APT_DEBS_DIR"
-  for extra_dir in "${extra_deb_dirs[@]}"; do
-    [ -z "$extra_dir" ] && continue
-    if [ ! -d "$extra_dir" ]; then
-      echo "EXTRA_APT_DEBS_DIR entry does not exist: $extra_dir" >&2
-      exit 1
-    fi
-    log "Copying extra local debs from $extra_dir"
-    find "$extra_dir" -maxdepth 1 -type f -name '*.deb' -print0 \
-      | xargs -0 -r cp -t "$APT_DEBS_DIR"
+assert_environment_debs() {
+  local deb name
+  for deb in "$APT_DEBS_DIR"/*.deb; do
+    name="$(dpkg-deb -f "$deb" Package)"
+    case "$name" in
+      zj-*|robotpkg-*|xenomai*|libxenomai*|ros-humble-navi-*|ros-humble-robot-nodes*|ros-humble-legged-*|ros-humble-uplimb-*|ros-humble-upperlimb-*)
+        echo "Business/vendor package is not part of the Humble environment: $name" >&2
+        return 1;;
+    esac
   done
 }
 
@@ -324,10 +351,7 @@ download_apt_debs() {
   if [ -s "$MISSING_DEPS_FILE" ]; then
     echo "Warning: some dependency names are virtual or unavailable and were not downloaded:" >&2
     sed 's/^/  /' "$MISSING_DEPS_FILE" >&2
-    if [ "$FAIL_ON_MISSING_APT_DEBS" = "1" ]; then
-      echo "FAIL_ON_MISSING_APT_DEBS=1: refusing to create an incomplete offline bundle." >&2
-      exit 1
-    fi
+    echo "The offline apt solver will verify required dependencies and alternatives before release." >&2
   fi
 }
 
@@ -370,219 +394,53 @@ write_apt_repo_index() {
 }
 
 write_offline_installer() {
-  log "Writing offline installer"
-  cat > "$BUNDLE_ROOT/install_offline_humble_bundle.sh" <<'EOF'
-#!/usr/bin/env bash
-set -Eeuo pipefail
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-APT_DEBS_DIR="$SCRIPT_DIR/apt_debs"
-ARTIFACT_DIR="$SCRIPT_DIR/artifacts"
-APT_ROOT_DEPS="$SCRIPT_DIR/apt-root-deps.txt"
-
-repair_broken_apt_if_needed() {
-  local check_log
-  check_log="$(mktemp)"
-  if apt-get check >"$check_log" 2>&1; then
-    rm -f "$check_log"
-    return 0
-  fi
-
-  echo "The target machine has broken apt dependencies before ROS 2 installation." >&2
-  sed 's/^/  /' "$check_log" >&2
-  rm -f "$check_log"
-
-  if [ "${ALLOW_ONLINE_APT_REPAIR:-0}" = "1" ]; then
-    echo "ALLOW_ONLINE_APT_REPAIR=1: repairing system apt state with the configured online apt sources."
-    apt-get update
-    env DEBIAN_FRONTEND=noninteractive apt-get --fix-broken install -y
-    apt-get check
-    return 0
-  fi
-
-  cat >&2 <<REPAIREOF
-
-Fix the base OS package state first, then rerun this offline installer:
-  sudo apt update
-  sudo apt --fix-broken install -y
-  sudo ./install_offline_humble_bundle.sh
-
-If this machine is allowed to use online apt sources during repair, run:
-  ALLOW_ONLINE_APT_REPAIR=1 sudo -E ./install_offline_humble_bundle.sh
-
-REPAIREOF
-  exit 1
-}
-
-remove_existing_ros2_humble() {
-  local installed_packages=()
-  mapfile -t installed_packages < <(
-    dpkg-query -W -f='${binary:Package}\n' 'ros-humble-*' ros2-humble-focal-desktop-source 2>/dev/null | sort -u
-  )
-
-  if [ "${#installed_packages[@]}" -gt 0 ]; then
-    apt-get remove -y "${installed_packages[@]}" || true
-  else
-    echo "No existing ros-humble-* marker packages or main Humble bundle package found."
-  fi
-  rm -rf /opt/ros/humble
-}
-
-install_bundled_apt_dependencies() {
-  if [ ! -f "$APT_DEBS_DIR/Packages" ] && [ ! -f "$APT_DEBS_DIR/Packages.gz" ]; then
-    echo "Missing local apt index under $APT_DEBS_DIR" >&2
-    echo "This offline bundle is incomplete. Regenerate it with the current packaging scripts." >&2
-    exit 1
-  fi
-  if [ ! -f "$APT_ROOT_DEPS" ]; then
-    echo "Missing $APT_ROOT_DEPS" >&2
-    exit 1
-  fi
-
-  local apt_tmp source_list source_parts lists_dir
-  apt_tmp="$(mktemp -d)"
-  source_list="$apt_tmp/sources.list"
-  source_parts="$apt_tmp/sourceparts"
-  lists_dir="$apt_tmp/lists"
-  mkdir -p "$source_parts" "$lists_dir/partial"
-  printf 'deb [trusted=yes] file:%s ./\n' "$APT_DEBS_DIR" > "$source_list"
-
-  local apt_opts=(
-    -o "Dir::Etc::sourcelist=$source_list"
-    -o "Dir::Etc::sourceparts=$source_parts"
-    -o "Dir::State::Lists=$lists_dir"
-    -o "APT::Get::List-Cleanup=0"
-    -o "Acquire::Languages=none"
-  )
-  local apt_install_cmd=(
-    apt-get "${apt_opts[@]}" install
-    -y
-    --no-install-recommends
-    --no-upgrade
-  )
-  local apt_sim_log
-  apt_sim_log="$(mktemp)"
-
-  echo "Installing bundled apt dependencies from local repository: $APT_DEBS_DIR"
-  apt-get "${apt_opts[@]}" update
-  if ! xargs -r -a "$APT_ROOT_DEPS" env DEBIAN_FRONTEND=noninteractive \
-      "${apt_install_cmd[@]}" -s >"$apt_sim_log" 2>&1; then
-    echo "Unable to resolve bundled apt dependencies safely." >&2
-    sed 's/^/  /' "$apt_sim_log" >&2
-    rm -f "$apt_sim_log"
-    exit 1
-  fi
-  if grep -Eq '^(The following packages will be REMOVED:|WARNING: The following essential packages will be removed)' "$apt_sim_log"; then
-    echo "Refusing to install bundled apt dependencies because apt planned package removals." >&2
-    echo "This usually means the target OS package baseline is inconsistent with the bundle." >&2
-    sed 's/^/  /' "$apt_sim_log" >&2
-    rm -f "$apt_sim_log"
-    exit 1
-  fi
-  rm -f "$apt_sim_log"
-
-  xargs -r -a "$APT_ROOT_DEPS" env DEBIAN_FRONTEND=noninteractive \
-    "${apt_install_cmd[@]}"
-  rm -rf "$apt_tmp"
-}
-
-if [ "$(id -u)" -ne 0 ]; then
-  echo "Please run with sudo: sudo $0" >&2
-  exit 1
-fi
-
-. /etc/os-release
-if [ "${VERSION_CODENAME:-}" != "focal" ]; then
-  echo "This offline bundle is for Ubuntu 20.04 focal only; got ${PRETTY_NAME:-unknown}" >&2
-  exit 1
-fi
-if [ "$(dpkg --print-architecture)" != "amd64" ]; then
-  echo "This offline bundle is for amd64 only; got $(dpkg --print-architecture)" >&2
-  exit 1
-fi
-
-if [ "${FORCE_REINSTALL:-0}" = "1" ]; then
-  echo "FORCE_REINSTALL=1 is deprecated for this offline installer; use REINSTALL_EXISTING=1/0. Treating as REINSTALL_EXISTING=1."
-  export REINSTALL_EXISTING=1
-fi
-
-if [ "${REINSTALL_EXISTING:-1}" = "1" ]; then
-  echo "Removing any existing ROS 2 Humble bundle before offline install."
-  remove_existing_ros2_humble
-fi
-
-repair_broken_apt_if_needed
-
-if compgen -G "$APT_DEBS_DIR/*.deb" >/dev/null; then
-  install_bundled_apt_dependencies
-else
-  echo "Warning: no apt debs found under $APT_DEBS_DIR" >&2
-fi
-
-cd "$ARTIFACT_DIR"
-FORCE_REINSTALL="${REINSTALL_EXISTING:-1}" \
-  INSTALL_APT_DEPS=0 \
-  RUN_ROSDEP_UPDATE=0 \
-  INSTALL_OVERLAY_TOOLS="${INSTALL_OVERLAY_TOOLS:-0}" \
-  ./install_ros2_humble.sh
-
-cat <<MSG
-
-Offline ROS 2 Humble install finished.
-
-Use:
-  source /etc/ros/source_ros2_humble_clean.bash
-  ./artifacts/verify_installed_humble_env.sh
-
-MSG
-EOF
-  chmod 0755 "$BUNDLE_ROOT/install_offline_humble_bundle.sh"
+  local repo
+  repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+  cp "$repo/deploy/pico/install_humble_environment.sh" "$BUNDLE_ROOT/install.sh"
+  chmod +x "$BUNDLE_ROOT/install.sh"
+  {
+    cat "$DEPS_ROOT_FILE"
+    for deb in "$APT_DEBS_DIR"/ros2-humble-focal-desktop-source_*.deb "$APT_DEBS_DIR"/ros-humble-*.deb; do
+      [[ -f "$deb" ]] || continue
+      printf '%s=%s\n' "$(dpkg-deb -f "$deb" Package)" "$(dpkg-deb -f "$deb" Version)"
+    done
+  } | sort -u > "$BUNDLE_ROOT/root-packages.txt"
 }
 
 write_readme() {
-  cat > "$BUNDLE_ROOT/README_OFFLINE.zh-CN.md" <<EOF
-# ROS 2 Humble Focal 离线安装包
-
-这个目录由 \`builder/package/build_offline_humble_bundle.sh\` 生成，用于同型号
-Ubuntu 20.04 amd64 Pico 离线安装 ROS 2 Humble 前置环境。
-
-## 安装
-
-\`\`\`bash
-sudo ./install_offline_humble_bundle.sh
-source /etc/ros/source_ros2_humble_clean.bash
-./artifacts/verify_installed_humble_env.sh
-\`\`\`
-
-如果目标机器已有旧环境，并确认要覆盖：
-
-\`\`\`bash
-sudo ./install_offline_humble_bundle.sh
-\`\`\`
-
-离线安装器默认会先清理旧的 \`/opt/ros/humble\`、\`ros-humble-*\` marker
-和主 bundle 包，再安装当前离线包。若只想在发现旧环境时失败而不是覆盖：
-
-\`\`\`bash
-REINSTALL_EXISTING=0 sudo -E ./install_offline_humble_bundle.sh
-\`\`\`
-
-## 内容
-
-- \`artifacts/\`: 已构建好的 ROS 2 Humble 主 deb、marker deb、CycloneDDS 配置和验证脚本。
-- \`apt_debs/\`: 安装器需要的 Ubuntu apt 依赖 deb 包。
-- \`apt-root-deps.txt\`: artifacts 声明的直接依赖。
-- \`apt-closure-deps.txt\`: 递归解析出的 apt 依赖集合。
-- \`apt-virtual-deps.txt\`: apt 输出的虚拟包名或 ABI 别名，已由实际 provider 包满足。
-- \`apt-missing-deps.txt\`: 未能下载的虚拟包或网络失败包；如果为空，离线依赖更完整。
-
-运行版离线包不默认安装 \`python3-rosdep\` / \`python3-rosdep2\`，避免在保留
-ROS 1/Noetic 的机器上触发 apt 删除 \`ros-noetic-*\` 或业务包。需要在目标机上
-编译 overlay 时，再按该机器的 ROS 1/ROS 2 共存策略单独处理 rosdep。
-
-目标 Pico 不需要 GitHub，也不需要源码编译。
-EOF
+  local repo
+  repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+  cp "$repo/deploy/pico/README_OFFLINE.zh-CN.md" "$BUNDLE_ROOT/README.md"
+  (
+    cd "$BUNDLE_ROOT"
+    find apt_debs -type f -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS
+    sha256sum install.sh root-packages.txt README.md >> SHA256SUMS
+  )
 }
+
+validate_offline_dependencies() (
+  # Resolve against an empty installed-package database, not the build host.
+  # Missing alternatives/providers are not necessarily missing dependencies.
+  local temp
+  temp="$(mktemp -d)"
+  trap 'rm -rf "$temp"' EXIT
+  mkdir -p "$temp/lists/partial" "$temp/parts" "$temp/archives/partial"
+  : > "$temp/status"
+  printf 'deb [trusted=yes] file:%s ./\n' "$APT_DEBS_DIR" > "$temp/sources.list"
+  local opts=(-o "Dir::Etc::sourcelist=$temp/sources.list"
+              -o "Dir::Etc::sourceparts=$temp/parts"
+              -o "Dir::State::Lists=$temp/lists"
+              -o "Dir::State::status=$temp/status"
+              -o "Dir::Cache::archives=$temp/archives"
+              -o Dir::Cache::pkgcache= -o Dir::Cache::srcpkgcache=
+              -o "APT::Sandbox::User=$(id -un)" -o Acquire::Languages=none)
+  local -a roots
+  mapfile -t roots < "$BUNDLE_ROOT/root-packages.txt"
+  log "Validating offline dependencies with an empty package database"
+  apt-get "${opts[@]}" update > "$BUNDLE_ROOT/dependency-resolution.log" 2>&1
+  apt-get "${opts[@]}" -s --no-remove --no-install-recommends install "${roots[@]}" \
+    >> "$BUNDLE_ROOT/dependency-resolution.log" 2>&1
+)
 
 make_tarball() {
   log "Creating tarball"
@@ -602,8 +460,10 @@ main() {
   collect_root_deps
   resolve_apt_closure
   download_apt_debs
+  assert_environment_debs
   write_apt_repo_index
   write_offline_installer
+  validate_offline_dependencies
   write_readme
   make_tarball
 }

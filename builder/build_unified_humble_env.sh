@@ -13,7 +13,7 @@ BUILD_DIR="${BUILD_DIR:-$WORK_DIR/build}"
 LOG_DIR="${LOG_DIR:-$WORK_DIR/log}"
 OUT_DIR="${OUT_DIR:-$WORK_DIR/package_out}"
 PKG_NAME="${PKG_NAME:-ros2-humble-focal-desktop-source}"
-PKG_VERSION="${PKG_VERSION:-0.2.0+$(date +%Y%m%d%H%M)}"
+PKG_VERSION="${PKG_VERSION:-0.3.3+$(date +%Y%m%d%H%M)}"
 INSTALL_PREFIX="${INSTALL_PREFIX:-/opt/ros/humble}"
 BUILD_BASE="${BUILD_BASE:-$HOME/ros2_humble/build_deploy}"
 ROSDEP_USE_MIRROR="${ROSDEP_USE_MIRROR:-auto}"
@@ -246,17 +246,6 @@ package_unified_prefix() {
 
   cp "$PROFILE" "$OUT_DIR/artifacts/third_party.repos"
   cp "$OUT_DIR/source-lock.repos" "$OUT_DIR/artifacts/source-lock.repos"
-  cp "$REPO_ROOT/deploy/pico/verify_installed_humble_env.sh" "$OUT_DIR/artifacts/verify_installed_humble_env.sh"
-  chmod 0755 "$OUT_DIR/artifacts/verify_installed_humble_env.sh"
-
-  if [ -d "$REPO_ROOT/deploy/pico" ]; then
-    mkdir -p "$OUT_DIR/artifacts/pico"
-    rsync -a --delete \
-      --exclude '__pycache__/' \
-      --exclude '*.pyc' \
-      "$REPO_ROOT/deploy/pico/" \
-      "$OUT_DIR/artifacts/pico/"
-  fi
 
   if [ "$BUILD_OFFLINE_BUNDLE" = "1" ]; then
     log "Building offline deploy bundle"

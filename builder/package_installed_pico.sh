@@ -6,7 +6,7 @@ SOURCE_PREFIX="${SOURCE_PREFIX:-/opt/ros/humble}"
 WORK_DIR="${WORK_DIR:-$HOME/ros2_humble_release_build}"
 OUT_DIR="${OUT_DIR:-$WORK_DIR/package_out}"
 RELEASE_DIR="${RELEASE_DIR:-$REPO_ROOT/release/pico}"
-PKG_VERSION="${PKG_VERSION:-0.3.1+$(date +%Y%m%d%H%M)}"
+PKG_VERSION="${PKG_VERSION:-0.3.3+$(date +%Y%m%d%H%M)}"
 BUNDLE_VERSION="${BUNDLE_VERSION:-$(date +%Y%m%d%H%M)}"
 PROFILE="${PROFILE:-$REPO_ROOT/profiles/third_party.lock.repos}"
 
@@ -23,7 +23,6 @@ PROFILE="$PROFILE" \
 PKG_VERSION="$PKG_VERSION" \
 BUNDLE_VERSION="$BUNDLE_VERSION" \
 BUILD_OFFLINE_BUNDLE=1 \
-FAIL_ON_MISSING_APT_DEBS=1 \
   "$REPO_ROOT/builder/package/repackage_existing_humble_artifacts.sh"
 
 offline_dir="$OUT_DIR/artifacts/offline"

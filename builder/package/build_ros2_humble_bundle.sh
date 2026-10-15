@@ -4,7 +4,7 @@ set -Eeuo pipefail
 SRC_PREFIX="${SRC_PREFIX:-$HOME/ros2_humble/install_deploy}"
 OUT_DIR="${OUT_DIR:-$HOME/ros2_humble_deploy}"
 PKG_NAME="${PKG_NAME:-ros2-humble-focal-desktop-source}"
-PKG_VERSION="${PKG_VERSION:-0.1.0+$(date +%Y%m%d%H%M)}"
+PKG_VERSION="${PKG_VERSION:-0.3.3+$(date +%Y%m%d%H%M)}"
 PKG_ARCH="${PKG_ARCH:-$(dpkg --print-architecture)}"
 MAINTAINER="${MAINTAINER:-nav01 <nav01@localhost>}"
 INSTALL_PREFIX="${INSTALL_PREFIX:-/opt/ros/humble}"
@@ -67,6 +67,7 @@ copy_install_space() {
   # Business interfaces must be owned by their own DEBs, not the ROS underlay.
   python3 "$(dirname "${BASH_SOURCE[0]}")/prune_business_packages.py" \
     "$STAGED_PREFIX" navi_robot_msgs robot_nodes_py \
+    --allowlist "$(dirname "${BASH_SOURCE[0]}")/../../profiles/humble-environment-packages.txt" \
     > "$ARTIFACT_DIR/excluded-business-files.txt"
 
   mkdir -p "$STAGED_PREFIX/share/ros2_humble_source_build"
@@ -403,28 +404,36 @@ EOF
 
   cat > "$DEV_DEPS_FILE" <<'EOF'
 build-essential
-chrony
 cmake
 git
+mawk
 libasio-dev
 libboost-filesystem-dev
 libboost-regex-dev
 libboost-serialization-dev
 libboost-thread-dev
+libconsole-bridge-dev
 libeigen3-dev
 libfmt-dev
 libgoogle-glog-dev
+libgtest-dev
+libgmock-dev
 libhdf5-dev
 libnl-3-dev
 libspdlog-dev
+libssl-dev
+libtinyxml-dev
+libtinyxml2-dev
+liburdfdom-dev
+liburdfdom-headers-dev
 libyaml-cpp-dev
 libzmq3-dev
 pkg-config
 python3-colcon-common-extensions
+python3-dev
 python3-pip
 python3-vcstool
 python3-venv
-sysstat
 EOF
 }
 
@@ -598,509 +607,6 @@ EOF
   log "Created $ROSDEP_RULES_FILE"
 }
 
-write_installer() {
-  log "Writing installer and deployment notes"
-  local installer="$ARTIFACT_DIR/install_ros2_humble.sh"
-  local marker_installer="$ARTIFACT_DIR/install_ros2_humble_markers.sh"
-  local deb_name
-  deb_name="$(basename "$ARTIFACT_DIR"/${PKG_NAME}_${PKG_VERSION}_${PKG_ARCH}.deb)"
-  local marker_tar_name
-  marker_tar_name="$(basename "$MARKER_TAR")"
-
-  cat > "$installer" <<EOF
-#!/usr/bin/env bash
-set -Eeuo pipefail
-
-SCRIPT_DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
-DEB="\$SCRIPT_DIR/$deb_name"
-MARKERS_TAR="\$SCRIPT_DIR/$marker_tar_name"
-ROSDEP_RULES="\$SCRIPT_DIR/$ROSDEP_RULES_BASENAME"
-INSTALL_PREFIX="$INSTALL_PREFIX"
-ROSDEP_INDEX_URL_FILE="/etc/ros/rosdep/rosdistro_index_url"
-DDS_ASSET_DIR="\$SCRIPT_DIR/pico"
-INSTALL_APT_DEPS="\${INSTALL_APT_DEPS:-1}"
-RUN_ROSDEP_UPDATE="\${RUN_ROSDEP_UPDATE:-1}"
-
-configure_rosdep_network() {
-  local mode="\${ROSDEP_USE_MIRROR:-auto}"
-  local mirror="\${ROSDEP_ROSDISTRO_MIRROR:-https://mirrors.ustc.edu.cn/rosdistro}"
-  local raw_probe="https://raw.githubusercontent.com/ros/rosdistro/master/rosdep/base.yaml"
-  local default_list="/etc/ros/rosdep/sources.list.d/20-default.list"
-  local mirror_hostpath="\${mirror#https://}"
-  mirror_hostpath="\${mirror_hostpath#http://}"
-  local tmp_list
-
-  if [ "\$mode" = "0" ] || [ "\$mode" = "false" ]; then
-    return 0
-  fi
-  if [ "\$mode" = "auto" ] && curl -fsSL --connect-timeout 5 --max-time 8 "\$raw_probe" >/dev/null 2>&1; then
-    return 0
-  fi
-
-  tmp_list="\$(mktemp)"
-  if curl -fsSL --connect-timeout 10 --max-time 30 "\$mirror/rosdep/sources.list.d/20-default.list" -o "\$tmp_list"; then
-    mkdir -p /etc/ros/rosdep/sources.list.d /etc/ros/rosdep
-    if [ -f "\$default_list" ] && [ ! -f "\$default_list.before-mirror" ]; then
-      cp "\$default_list" "\$default_list.before-mirror"
-    fi
-    sed \\
-      -e "s#https://raw.githubusercontent.com/ros/rosdistro/master#\$mirror#g" \\
-      -e "s#http://raw.githubusercontent.com/ros/rosdistro/master#\$mirror#g" \\
-      -e "s#raw.githubusercontent.com/ros/rosdistro/master#\$mirror_hostpath#g" \\
-      "\$tmp_list" > "\$default_list"
-    printf '%s\n' "\$mirror/index-v4.yaml" > "\$ROSDEP_INDEX_URL_FILE"
-    echo "Configured rosdep rosdistro mirror: \$mirror"
-  else
-    echo "Warning: raw.githubusercontent.com is unreachable and mirror setup failed: \$mirror" >&2
-  fi
-  rm -f "\$tmp_list"
-}
-
-run_rosdep_update() {
-  local index_url=""
-  if [ -f "\$ROSDEP_INDEX_URL_FILE" ]; then
-    index_url="\$(head -n 1 "\$ROSDEP_INDEX_URL_FILE")"
-  fi
-
-  if [ -n "\${SUDO_USER:-}" ] && [ "\$SUDO_USER" != "root" ]; then
-    if [ -n "\$index_url" ]; then
-      su - "\$SUDO_USER" -c "ROSDISTRO_INDEX_URL=\$index_url rosdep update" || ROSDISTRO_INDEX_URL="\$index_url" rosdep update || true
-    else
-      su - "\$SUDO_USER" -c 'rosdep update' || rosdep update || true
-    fi
-  else
-    if [ -n "\$index_url" ]; then
-      ROSDISTRO_INDEX_URL="\$index_url" rosdep update || true
-    else
-      rosdep update || true
-    fi
-  fi
-}
-
-install_rosdep_rules() {
-  if [ ! -f "\$ROSDEP_RULES" ]; then
-    return 0
-  fi
-  configure_rosdep_network
-  mkdir -p /etc/ros/rosdep /etc/ros/rosdep/sources.list.d
-  install -m 0644 "\$ROSDEP_RULES" /etc/ros/rosdep/$ROSDEP_RULES_BASENAME
-  cat > /etc/ros/rosdep/sources.list.d/50-ros2-humble-focal-source-build.list <<'RULEEOF'
-yaml file:///etc/ros/rosdep/$ROSDEP_RULES_BASENAME
-RULEEOF
-  if [ "\$RUN_ROSDEP_UPDATE" != "0" ] && command -v rosdep >/dev/null 2>&1; then
-    run_rosdep_update
-  fi
-}
-
-install_pico_runtime_assets() {
-  if [ ! -d "\$DDS_ASSET_DIR" ]; then
-    return 0
-  fi
-
-  echo "Installing Pico CycloneDDS deployment assets from \$DDS_ASSET_DIR"
-  mkdir -p /etc/ros/cyclonedds /etc/ros /opt/zj_humanoid/tools
-
-  if [ -f "\$DDS_ASSET_DIR/pico-cyclonedds.xml" ]; then
-    install -m 0644 "\$DDS_ASSET_DIR/pico-cyclonedds.xml" /etc/ros/cyclonedds/pico-cyclonedds.xml
-  fi
-  if [ -f "\$DDS_ASSET_DIR/10-ros2-dds.conf" ]; then
-    install -m 0644 "\$DDS_ASSET_DIR/10-ros2-dds.conf" /etc/sysctl.d/10-ros2-dds.conf
-    sysctl --system || true
-  fi
-  if [ -f "\$DDS_ASSET_DIR/ros2_link_test.py" ]; then
-    install -m 0755 "\$DDS_ASSET_DIR/ros2_link_test.py" /opt/zj_humanoid/tools/ros2_link_test.py
-  fi
-  if [ -f "\$DDS_ASSET_DIR/source_ros2_humble_clean.bash" ]; then
-    install -m 0644 "\$DDS_ASSET_DIR/source_ros2_humble_clean.bash" /etc/ros/source_ros2_humble_clean.bash
-    install -m 0644 "\$DDS_ASSET_DIR/source_ros2_humble_clean.bash" /opt/zj_humanoid/tools/source_ros2_humble_clean.bash
-  fi
-
-  cat > /etc/ros/ros2_humble_cyclone.env <<'ENVEOF'
-ROS_DOMAIN_ID=20
-ROS_LOCALHOST_ONLY=0
-RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-CYCLONEDDS_URI=file:///etc/ros/cyclonedds/pico-cyclonedds.xml
-ENVEOF
-
-  cat > /etc/profile.d/ros2_humble_cyclone.sh <<'PROFILEEOF'
-# ROS 2 Humble DDS defaults for ZJ Humanoid Pico.
-# This file intentionally exports only DDS/RMW variables. Startup scripts should
-# source /opt/ros/humble/setup.bash explicitly before launching ROS 2 nodes.
-export ROS_DOMAIN_ID="\${ROS_DOMAIN_ID:-20}"
-export ROS_LOCALHOST_ONLY="\${ROS_LOCALHOST_ONLY:-0}"
-export RMW_IMPLEMENTATION="\${RMW_IMPLEMENTATION:-rmw_cyclonedds_cpp}"
-export CYCLONEDDS_URI="\${CYCLONEDDS_URI:-file:///etc/ros/cyclonedds/pico-cyclonedds.xml}"
-PROFILEEOF
-
-  chmod 0644 /etc/ros/ros2_humble_cyclone.env /etc/profile.d/ros2_humble_cyclone.sh
-}
-
-cmake_version_for_user() {
-  local target_user="\$1"
-  if [ "\$target_user" = "root" ]; then
-    PATH="/root/.local/bin:\$PATH" cmake --version 2>/dev/null | awk '/version/ {print \$3; exit}' || true
-  else
-    su - "\$target_user" -c 'PATH="\$HOME/.local/bin:\$PATH"; cmake --version 2>/dev/null | awk "/version/ {print \\\$3; exit}"' || true
-  fi
-}
-
-install_user_cmake_for_overlay() {
-  if [ "\${INSTALL_OVERLAY_TOOLS:-1}" = "0" ]; then
-    return 0
-  fi
-
-  local target_user="\${SUDO_USER:-root}"
-  if ! id "\$target_user" >/dev/null 2>&1; then
-    target_user="root"
-  fi
-
-  local current_version
-  current_version="\$(cmake_version_for_user "\$target_user")"
-  if [ -n "\$current_version" ] && dpkg --compare-versions "\$current_version" ge 3.22; then
-    echo "Overlay CMake for \$target_user is new enough: \$current_version"
-    return 0
-  fi
-
-  echo "Installing user-level CMake >= 3.22 for overlay builds as \$target_user."
-  if [ "\$target_user" = "root" ]; then
-    python3 -m pip install --user 'cmake>=3.22,<3.29' || {
-      echo "Warning: failed to install newer CMake with pip. Overlay packages such as ros2_control may need CMake >= 3.22." >&2
-      return 0
-    }
-  else
-    su - "\$target_user" -c 'python3 -m pip install --user "cmake>=3.22,<3.29"' || {
-      echo "Warning: failed to install newer CMake with pip. Overlay packages such as ros2_control may need CMake >= 3.22." >&2
-      return 0
-    }
-  fi
-
-  current_version="\$(cmake_version_for_user "\$target_user")"
-  if [ -n "\$current_version" ] && dpkg --compare-versions "\$current_version" ge 3.22; then
-    echo "Installed overlay CMake for \$target_user: \$current_version"
-  else
-    echo "Warning: newer CMake was not found after pip install. Add ~/.local/bin to PATH before building overlays." >&2
-  fi
-}
-
-install_deb_or_fix_deps() {
-  if dpkg -i "\$@"; then
-    return 0
-  fi
-
-  if [ "\$INSTALL_APT_DEPS" = "0" ]; then
-    echo "dpkg failed while INSTALL_APT_DEPS=0; not running online apt fixup." >&2
-    echo "Install the bundled apt dependencies first, then rerun this installer." >&2
-    return 1
-  fi
-
-  apt-get -f install -y
-}
-
-if [ "\$(id -u)" -ne 0 ]; then
-  echo "Please run with sudo: sudo \$0" >&2
-  exit 1
-fi
-
-. /etc/os-release
-if [ "\${VERSION_CODENAME:-}" != "focal" ]; then
-  echo "This package is for Ubuntu 20.04 focal only; got \${PRETTY_NAME:-unknown}" >&2
-  exit 1
-fi
-
-if [ "\$(dpkg --print-architecture)" != "amd64" ]; then
-  echo "This package is for amd64 only; got \$(dpkg --print-architecture)" >&2
-  exit 1
-fi
-
-if dpkg -l 'ros-humble-*' 2>/dev/null | awk '/^ii/{found=1} END{exit found ? 0 : 1}'; then
-  echo "Existing ros-humble-* Debian packages were found. Refusing to mix installations." >&2
-  exit 1
-fi
-
-if [ -e "\$INSTALL_PREFIX" ] && [ -n "\$(find "\$INSTALL_PREFIX" -mindepth 1 -maxdepth 1 2>/dev/null | head -n 1)" ]; then
-  echo "\$INSTALL_PREFIX already exists and is not empty. Move it away before installing." >&2
-  exit 1
-fi
-
-if [ "\$INSTALL_APT_DEPS" != "0" ]; then
-  apt-get update
-  apt-get install -y \$(tr '\n' ' ' < "\$SCRIPT_DIR/runtime-deps.txt")
-
-  if [ -f "\$SCRIPT_DIR/dev-deps.txt" ]; then
-    dev_install=()
-    dev_missing=()
-    while IFS= read -r pkg; do
-      [ -z "\$pkg" ] && continue
-      if apt-cache show "\$pkg" >/dev/null 2>&1; then
-        dev_install+=("\$pkg")
-      else
-        dev_missing+=("\$pkg")
-      fi
-    done < "\$SCRIPT_DIR/dev-deps.txt"
-
-    if [ "\${#dev_install[@]}" -gt 0 ]; then
-      apt-get install -y "\${dev_install[@]}"
-    fi
-    if [ "\${#dev_missing[@]}" -gt 0 ]; then
-      echo "Some optional overlay build packages are not visible in apt:" >&2
-      printf '  %s\n' "\${dev_missing[@]}" >&2
-      echo "Runtime install continues; install the missing tools separately before building overlay packages." >&2
-    fi
-  fi
-else
-  echo "INSTALL_APT_DEPS=0: skipping apt runtime/dev dependency installation."
-fi
-install_user_cmake_for_overlay
-
-install_deb_or_fix_deps "\$DEB"
-
-if [ -f "\$MARKERS_TAR" ]; then
-  marker_tmp="\$(mktemp -d)"
-  trap 'rm -rf "\$marker_tmp"' EXIT
-  tar -xzf "\$MARKERS_TAR" -C "\$marker_tmp"
-  install_deb_or_fix_deps "\$marker_tmp"/*/*.deb
-fi
-install_rosdep_rules
-install_pico_runtime_assets
-
-cat <<MSG
-
-ROS 2 Humble installed at \$INSTALL_PREFIX
-
-Use:
-  source \$INSTALL_PREFIX/setup.bash
-  source /etc/profile.d/ros2_humble_cyclone.sh
-
-For overlay workspaces:
-  source \$INSTALL_PREFIX/setup.bash
-  mkdir -p ~/ros2_overlay/src
-  cd ~/ros2_overlay
-  if command -v rosdep >/dev/null 2>&1; then
-    rosdep install --from-paths src --ignore-src -y --os=ubuntu:focal --rosdistro humble
-  fi
-  export PATH=\$HOME/.local/bin:\$PATH
-  colcon build --symlink-install
-  source install/setup.bash
-
-MSG
-EOF
-  chmod 0755 "$installer"
-
-  cat > "$marker_installer" <<EOF
-#!/usr/bin/env bash
-set -Eeuo pipefail
-
-SCRIPT_DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
-MARKERS_TAR="\$SCRIPT_DIR/$marker_tar_name"
-ROSDEP_RULES="\$SCRIPT_DIR/$ROSDEP_RULES_BASENAME"
-REQUIRED_BUNDLE="$PKG_NAME"
-REQUIRED_VERSION="$PKG_VERSION"
-ROSDEP_INDEX_URL_FILE="/etc/ros/rosdep/rosdistro_index_url"
-
-configure_rosdep_network() {
-  local mode="\${ROSDEP_USE_MIRROR:-auto}"
-  local mirror="\${ROSDEP_ROSDISTRO_MIRROR:-https://mirrors.ustc.edu.cn/rosdistro}"
-  local raw_probe="https://raw.githubusercontent.com/ros/rosdistro/master/rosdep/base.yaml"
-  local default_list="/etc/ros/rosdep/sources.list.d/20-default.list"
-  local mirror_hostpath="\${mirror#https://}"
-  mirror_hostpath="\${mirror_hostpath#http://}"
-  local tmp_list
-
-  if [ "\$mode" = "0" ] || [ "\$mode" = "false" ]; then
-    return 0
-  fi
-  if [ "\$mode" = "auto" ] && curl -fsSL --connect-timeout 5 --max-time 8 "\$raw_probe" >/dev/null 2>&1; then
-    return 0
-  fi
-
-  tmp_list="\$(mktemp)"
-  if curl -fsSL --connect-timeout 10 --max-time 30 "\$mirror/rosdep/sources.list.d/20-default.list" -o "\$tmp_list"; then
-    mkdir -p /etc/ros/rosdep/sources.list.d /etc/ros/rosdep
-    if [ -f "\$default_list" ] && [ ! -f "\$default_list.before-mirror" ]; then
-      cp "\$default_list" "\$default_list.before-mirror"
-    fi
-    sed \\
-      -e "s#https://raw.githubusercontent.com/ros/rosdistro/master#\$mirror#g" \\
-      -e "s#http://raw.githubusercontent.com/ros/rosdistro/master#\$mirror#g" \\
-      -e "s#raw.githubusercontent.com/ros/rosdistro/master#\$mirror_hostpath#g" \\
-      "\$tmp_list" > "\$default_list"
-    printf '%s\n' "\$mirror/index-v4.yaml" > "\$ROSDEP_INDEX_URL_FILE"
-    echo "Configured rosdep rosdistro mirror: \$mirror"
-  else
-    echo "Warning: raw.githubusercontent.com is unreachable and mirror setup failed: \$mirror" >&2
-  fi
-  rm -f "\$tmp_list"
-}
-
-run_rosdep_update() {
-  local index_url=""
-  if [ -f "\$ROSDEP_INDEX_URL_FILE" ]; then
-    index_url="\$(head -n 1 "\$ROSDEP_INDEX_URL_FILE")"
-  fi
-
-  if [ -n "\${SUDO_USER:-}" ] && [ "\$SUDO_USER" != "root" ]; then
-    if [ -n "\$index_url" ]; then
-      su - "\$SUDO_USER" -c "ROSDISTRO_INDEX_URL=\$index_url rosdep update" || ROSDISTRO_INDEX_URL="\$index_url" rosdep update || true
-    else
-      su - "\$SUDO_USER" -c 'rosdep update' || rosdep update || true
-    fi
-  else
-    if [ -n "\$index_url" ]; then
-      ROSDISTRO_INDEX_URL="\$index_url" rosdep update || true
-    else
-      rosdep update || true
-    fi
-  fi
-}
-
-install_rosdep_rules() {
-  if [ ! -f "\$ROSDEP_RULES" ]; then
-    return 0
-  fi
-  configure_rosdep_network
-  mkdir -p /etc/ros/rosdep /etc/ros/rosdep/sources.list.d
-  install -m 0644 "\$ROSDEP_RULES" /etc/ros/rosdep/$ROSDEP_RULES_BASENAME
-  cat > /etc/ros/rosdep/sources.list.d/50-ros2-humble-focal-source-build.list <<'RULEEOF'
-yaml file:///etc/ros/rosdep/$ROSDEP_RULES_BASENAME
-RULEEOF
-  if command -v rosdep >/dev/null 2>&1; then
-    run_rosdep_update
-  fi
-}
-
-if [ "\$(id -u)" -ne 0 ]; then
-  echo "Please run with sudo: sudo \$0" >&2
-  exit 1
-fi
-
-if [ ! -f "\$MARKERS_TAR" ]; then
-  echo "Missing marker archive: \$MARKERS_TAR" >&2
-  exit 1
-fi
-
-installed_version="\$(dpkg-query -W -f='\${Version}' "\$REQUIRED_BUNDLE" 2>/dev/null || true)"
-if [ "\$installed_version" != "\$REQUIRED_VERSION" ]; then
-  echo "\$REQUIRED_BUNDLE \$REQUIRED_VERSION must be installed first; found '\${installed_version:-not installed}'." >&2
-  exit 1
-fi
-
-marker_tmp="\$(mktemp -d)"
-trap 'rm -rf "\$marker_tmp"' EXIT
-tar -xzf "\$MARKERS_TAR" -C "\$marker_tmp"
-dpkg -i "\$marker_tmp"/*/*.deb || apt-get -f install -y
-install_rosdep_rules
-
-echo "Installed ros-humble-* marker packages for the source-built ROS 2 Humble bundle."
-EOF
-  chmod 0755 "$marker_installer"
-
-  cat > "$ARTIFACT_DIR/README_DEPLOY.md" <<EOF
-# ROS 2 Humble Focal Desktop Bundle
-
-Built from source on Ubuntu 20.04 amd64.
-
-## Files
-
-- \`$deb_name\`: ROS 2 Humble desktop install tree under \`$INSTALL_PREFIX\`
-- \`$marker_tar_name\`: empty per-package \`ros-humble-*\` marker debs for apt/rosdep dependency resolution
-- \`$ROSDEP_RULES_BASENAME\`: local Focal rosdep mappings for bundled ROS package keys
-- \`runtime-deps.txt\`: Ubuntu runtime dependency package list
-- \`dev-deps.txt\`: optional overlay build tool dependency package list
-- \`install_ros2_humble.sh\`: guarded installer for clean machines
-- \`install_ros2_humble_markers.sh\`: marker-only installer for a machine where the main bundle is already installed
-- \`pico/\`: Pico CycloneDDS XML, DDS sysctl tuning, environment loader, and link-test tool
-
-## Install
-
-\`\`\`bash
-sudo ./install_ros2_humble.sh
-source $INSTALL_PREFIX/setup.bash
-source /etc/profile.d/ros2_humble_cyclone.sh
-\`\`\`
-
-The installer refuses to run if existing \`ros-humble-*\` Debian packages or a
-non-empty \`$INSTALL_PREFIX\` are present.
-
-When \`pico/\` is present, the installer also writes:
-
-\`\`\`text
-/etc/ros/cyclonedds/pico-cyclonedds.xml
-/etc/ros/ros2_humble_cyclone.env
-/etc/ros/source_ros2_humble_clean.bash
-/etc/profile.d/ros2_humble_cyclone.sh
-/etc/sysctl.d/10-ros2-dds.conf
-/opt/zj_humanoid/tools/ros2_link_test.py
-/opt/zj_humanoid/tools/source_ros2_humble_clean.bash
-\`\`\`
-
-## Validate
-
-\`\`\`bash
-source $INSTALL_PREFIX/setup.bash
-source /etc/profile.d/ros2_humble_cyclone.sh
-./verify_installed_humble_env.sh
-ros2 pkg prefix rviz2
-ros2 run demo_nodes_cpp talker
-\`\`\`
-
-In another terminal:
-
-\`\`\`bash
-source $INSTALL_PREFIX/setup.bash
-ros2 topic echo --once /chatter std_msgs/msg/String
-\`\`\`
-
-## Overlay packages
-
-\`\`\`bash
-source $INSTALL_PREFIX/setup.bash
-mkdir -p ~/ros2_overlay/src
-cd ~/ros2_overlay/src
-# git clone or copy third-party packages here
-cd ~/ros2_overlay
-if command -v rosdep >/dev/null 2>&1; then
-  rosdep install --from-paths src --ignore-src -y --os=ubuntu:focal --rosdistro humble
-else
-  echo "rosdep is not installed; install declared apt/vendor dependencies from the offline bundle first."
-fi
-export PATH=\$HOME/.local/bin:\$PATH
-colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
-source install/setup.bash
-\`\`\`
-
-The marker debs make commands such as \`dpkg -l 'ros-humble-*'\`, \`apt list
---installed 'ros-humble-*'\`, and \`rosdep install\` see the source-built ROS
-packages as installed Debian packages. They contain no ROS files; the actual
-files remain in \`$INSTALL_PREFIX\` from the main bundle.
-
-Because ROS 2 Humble is normally mapped to Ubuntu Jammy in upstream rosdep, the
-installer also registers a local Focal rosdep rule file for the bundled package
-keys.
-
-For third-party ROS packages on Focal, clone their ROS dependencies into the
-same workspace as source packages when no Ubuntu 20.04 Humble deb exists. For
-example, official \`ros2_control\` needs source dependencies such as
-\`control_msgs\`, \`control_toolbox\`, \`realtime_tools\`,
-\`generate_parameter_library\`, \`RSL\`, and \`backward_ros\`. Then run
-\`rosdep install --from-paths src --ignore-src --os=ubuntu:focal --rosdistro humble -y\`.
-The installer adds user-level CMake 3.22+ for these overlays because Ubuntu
-20.04's apt CMake is too old for parts of the current ros2_control dependency
-tree.
-
-If \`rosdep update\` times out on \`raw.githubusercontent.com\`, it does not
-break the installed ROS files or marker packages, but rosdep's cache may be
-incomplete. The installer defaults to \`ROSDEP_USE_MIRROR=auto\`: when GitHub raw
-is unreachable it rewrites rosdep's default source list to the USTC rosdistro
-mirror and stores \`https://mirrors.ustc.edu.cn/rosdistro/index-v4.yaml\` in
-\`/etc/ros/rosdep/rosdistro_index_url\`. You can force a mirror with
-\`ROSDEP_USE_MIRROR=1\`, disable this with \`ROSDEP_USE_MIRROR=0\`, or override the
-mirror with \`ROSDEP_ROSDISTRO_MIRROR=<url>\`.
-
-The local source-build rule is installed at
-\`/etc/ros/rosdep/rosdep-humble-focal-source-build.yaml\`.
-EOF
-}
-
 main() {
   require_focal_amd64
   require_packaging_tools
@@ -1115,7 +621,6 @@ main() {
   write_control_files
   build_deb
   build_marker_packages
-  write_installer
   log "Artifacts:"
   ls -lh "$ARTIFACT_DIR"
 }

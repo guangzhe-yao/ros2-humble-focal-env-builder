@@ -10,7 +10,7 @@ BUILD_BASE="${BUILD_BASE:-$HOME/ros2_humble/build_deploy}"
 PROFILE="${PROFILE:-$REPO_ROOT/profiles/third_party.lock.repos}"
 SOURCE_LOCK="${SOURCE_LOCK:-$OUT_DIR/source-lock.repos}"
 PKG_NAME="${PKG_NAME:-ros2-humble-focal-desktop-source}"
-PKG_VERSION="${PKG_VERSION:-0.3.0+$(date +%Y%m%d%H%M)}"
+PKG_VERSION="${PKG_VERSION:-0.3.3+$(date +%Y%m%d%H%M)}"
 INSTALL_PREFIX="${INSTALL_PREFIX:-/opt/ros/humble}"
 BUILD_OFFLINE_BUNDLE="${BUILD_OFFLINE_BUNDLE:-0}"
 
@@ -36,17 +36,6 @@ copy_artifact_metadata() {
     cp "$SOURCE_LOCK" "$artifacts/source-lock.repos"
   else
     cp "$PROFILE" "$artifacts/source-lock.repos"
-  fi
-  cp "$REPO_ROOT/deploy/pico/verify_installed_humble_env.sh" "$artifacts/verify_installed_humble_env.sh"
-  chmod 0755 "$artifacts/verify_installed_humble_env.sh"
-
-  if [ -d "$REPO_ROOT/deploy/pico" ]; then
-    mkdir -p "$artifacts/pico"
-    rsync -a --delete \
-      --exclude '__pycache__/' \
-      --exclude '*.pyc' \
-      "$REPO_ROOT/deploy/pico/" \
-      "$artifacts/pico/"
   fi
 }
 

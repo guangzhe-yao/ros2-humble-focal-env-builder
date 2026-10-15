@@ -16,10 +16,9 @@ BASE_BUILD_DIR="${BASE_BUILD_DIR:-$WORK_DIR/build_deploy}"
 BASE_LOG_DIR="${BASE_LOG_DIR:-$WORK_DIR/log_deploy}"
 UNIFIED_WORK_DIR="${UNIFIED_WORK_DIR:-$HOME/ros2_humble_unified}"
 PROFILE="${PROFILE:-$REPO_ROOT/profiles/third_party.lock.repos}"
-PKG_VERSION="${PKG_VERSION:-0.3.0+$(date +%Y%m%d%H%M)}"
+PKG_VERSION="${PKG_VERSION:-0.3.3+$(date +%Y%m%d%H%M)}"
 INSTALL_PREFIX="${INSTALL_PREFIX:-/opt/ros/humble}"
 INSTALL_AFTER_BUILD="${INSTALL_AFTER_BUILD:-1}"
-FORCE_REINSTALL="${FORCE_REINSTALL:-0}"
 CLEAN_BASE="${CLEAN_BASE:-0}"
 REBUILD_BASE="${REBUILD_BASE:-0}"
 COLCON_PARALLEL_WORKERS="${COLCON_PARALLEL_WORKERS:-2}"
@@ -355,37 +354,18 @@ build_unified_artifacts() {
   "$REPO_ROOT/builder/build_unified_humble_env.sh"
 }
 
-remove_existing_install_if_requested() {
-  if [ "$FORCE_REINSTALL" != "1" ]; then
-    return 0
-  fi
-  log "FORCE_REINSTALL=1: removing existing installed Humble bundle"
-  sudo apt remove -y 'ros-humble-*' ros2-humble-focal-desktop-source || true
-  sudo rm -rf "$INSTALL_PREFIX"
-}
-
 install_generated_artifacts() {
   if [ "$INSTALL_AFTER_BUILD" != "1" ]; then
     log "INSTALL_AFTER_BUILD=0, not installing generated artifacts."
     return 0
   fi
 
-  remove_existing_install_if_requested
   local artifacts="$UNIFIED_WORK_DIR/package_out/artifacts"
-  if [ ! -x "$artifacts/install_ros2_humble.sh" ]; then
-    echo "Missing generated installer: $artifacts/install_ros2_humble.sh" >&2
-    exit 1
-  fi
-
-  log "Installing generated Humble bundle from $artifacts"
-  sudo "$artifacts/install_ros2_humble.sh"
-
-  log "Running installed environment verification"
-  source_ros_setup "$INSTALL_PREFIX/setup.bash"
-  if [ -f /etc/profile.d/ros2_humble_cyclone.sh ]; then
-    source_ros_setup /etc/profile.d/ros2_humble_cyclone.sh
-  fi
-  "$artifacts/verify_installed_humble_env.sh"
+  local bundle_name="ros2-humble-focal-offline-bundle_${PKG_VERSION}_amd64"
+  ARTIFACT_DIR="$artifacts" OUT_DIR="$artifacts/offline" BUNDLE_NAME="$bundle_name" \
+    bash "$REPO_ROOT/builder/package/build_offline_humble_bundle.sh"
+  log "Installing the generated development environment without clearing existing overlays"
+  sudo bash "$artifacts/offline/$bundle_name/install.sh"
 }
 
 print_summary() {
@@ -405,7 +385,6 @@ Installed prefix:
 
 Use:
   source $INSTALL_PREFIX/setup.bash
-  source /etc/profile.d/ros2_humble_cyclone.sh
 
 Third-party package list:
   $PROFILE

@@ -57,10 +57,6 @@ node.destroy_node()
 rclpy.shutdown()
 PY
 
-if [ -f /opt/zj_humanoid/tools/ros2_link_test.py ]; then
-  echo "ROS 2 link test tool -> /opt/zj_humanoid/tools/ros2_link_test.py"
-fi
-
 check_bash_completion() {
   if [ -z "${BASH_VERSION:-}" ]; then
     return 0

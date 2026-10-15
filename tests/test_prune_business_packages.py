@@ -35,6 +35,19 @@ class PruneTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 module.prune(directory, ['../etc'])
 
+    def test_rejects_business_overlay(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            index = root / 'share/ament_index/resource_index/packages'
+            index.mkdir(parents=True)
+            (index / 'rclcpp').touch()
+            allowed = root / 'allowed.txt'
+            allowed.write_text('rclcpp\n')
+            module.validate_environment(root, allowed)
+            (index / 'naviai_robot').touch()
+            with self.assertRaisesRegex(ValueError, 'naviai_robot'):
+                module.validate_environment(root, allowed)
+
 
 if __name__ == '__main__':
     unittest.main()

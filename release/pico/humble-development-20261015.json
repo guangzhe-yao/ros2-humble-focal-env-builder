@@ -1,0 +1,36 @@
+{
+  "release": "20261015dev1",
+  "base_version": "0.3.3+20261015",
+  "platform": "Ubuntu 20.04 amd64",
+  "archive": "ros2-humble-focal-offline-bundle_20261015dev1_amd64.tar.gz",
+  "archive_bytes": 345496490,
+  "sha256": "e667b9b4128e6ea1b48704a6e9cab844568d21333cf578a393401b3c6722e296",
+  "deb_count": 1029,
+  "ros_package_count": 399,
+  "scope": "Humble underlay, general development tools and Ubuntu dependencies",
+  "excluded": [
+    "robot-state and lowerlimb business packages",
+    "upperlimb business interfaces and messages",
+    "supplier runtime libraries",
+    "robot SDK",
+    "Xenomai userspace and kernel"
+  ],
+  "installation": "sudo bash install.sh",
+  "preserves_installed_business_packages": true,
+  "verification": {
+    "fresh_ubuntu_20_04_network_none_install": "passed",
+    "empty_status_offline_apt_dependency_resolution": "passed",
+    "ros_package_allowlist": "passed",
+    "vendor_directories_absent": "passed",
+    "cpp_and_custom_message_build": "passed",
+    "python_generated_type_support": "passed",
+    "rclpy_and_cpp_node_smoke": "passed",
+    "rviz_linked_libraries": "passed",
+    "colcon_test": "2 tests, 0 errors, 0 failures, 0 skipped"
+  },
+  "limitations": [
+    "Repackaged an existing source-built Humble underlay; not a full source rebuild.",
+    "No robot motion, SDK, Xenomai or hardware functionality tested by this release.",
+    "Project-specific dependencies and online rosdep indexes are not an arbitrary-project offline guarantee."
+  ]
+}

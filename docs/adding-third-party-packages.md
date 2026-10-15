@@ -150,18 +150,17 @@ SHAs and avoids changes caused by moving upstream branches.
 
 ## 8. Deploy
 
-Copy the complete artifact directory to a clean Ubuntu 20.04 amd64 machine:
+Generate the offline environment release and copy it to Ubuntu 20.04 amd64:
 
 ```bash
-cd artifacts
-sudo ./install_ros2_humble.sh
+cd <extracted-environment-release>
+sudo bash install.sh
 source /opt/ros/humble/setup.bash
-./verify_installed_humble_env.sh
 ```
 
-For an existing older unified bundle, remove the old marker and main packages,
-remove `/opt/ros/humble`, and install the new artifact set. Do not mix files from
-two bundle versions.
+The installer upgrades apt-managed environment packages without clearing the
+prefix or removing business DEBs. Only upstream general-purpose ROS packages
+belong in this repository; update the environment allowlist when adding them.
 
 ## Verified Baseline
 

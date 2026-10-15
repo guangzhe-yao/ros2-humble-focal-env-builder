@@ -1,30 +1,11 @@
-# Pico 运行配置
+# Humble 安装入口与可选维护工具
 
-这里仅包含安装到 Pico 的运行配置和验证工具，不负责 Orin 的 Docker 环境。
+`install_humble_environment.sh` 会作为离线包中的 `install.sh` 发布。
+用户只需在完整解压目录执行 `sudo bash install.sh`。
 
-默认参数：
+其余 DDS 配置、网络诊断和验证文件仅供维护者按现场需求参考，
+不会由新版开发环境安装器复制到系统或自动执行。
+安装器不设置固定 IP、DDS 对端、Domain ID、sysctl 或机器人服务。
 
-- Pico 有线 IP：`192.168.217.66`
-- DDS 对端：`192.168.217.100`
-- `ROS_DOMAIN_ID=20`
-- `RMW_IMPLEMENTATION=rmw_cyclonedds_cpp`
-- CycloneDDS 使用固定单播发现，禁用 multicast。
-
-离线包的安装器会自动安装本目录内容：
-
-```text
-/etc/ros/cyclonedds/pico-cyclonedds.xml
-/etc/sysctl.d/10-ros2-dds.conf
-/etc/ros/source_ros2_humble_clean.bash
-/opt/zj_humanoid/tools/ros2_link_test.py
-```
-
-安装后验证：
-
-```bash
-source /etc/ros/source_ros2_humble_clean.bash
-/opt/zj_humanoid/tools/ros2_link_test.py server --label pico
-```
-
-若实际 Pico IP、DDS 对端 IP 或 Domain ID 不同，必须在出包前修改配置；否则
-固定单播发现无法工作。
+例如需要诊断 DDS 时，可在明确网络配置后手动调用本目录的
+`ros2_link_test.py`。不要把历史模板中的 IP 当作目标机器默认配置。

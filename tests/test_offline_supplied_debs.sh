@@ -21,6 +21,8 @@ make_fixture() {
 }
 make_fixture local-vendor "$EXTRA_APT_DEBS_DIR" 'virtual-runtime (= 1.0)'
 make_fixture cached-system "$CACHED_APT_DEBS_DIR"
+make_fixture unused-system "$CACHED_APT_DEBS_DIR"
+make_fixture zj-humanoid-rtipc-runtime "$CACHED_APT_DEBS_DIR"
 source "$REPO_ROOT/builder/package/build_offline_humble_bundle.sh"
 mkdir -p "$APT_DEBS_DIR"
 collect_root_deps
@@ -31,10 +33,17 @@ if grep -Fxq cached-system "$DEPS_ROOT_FILE"; then
 fi
 printf 'local-vendor\nvirtual-runtime\ncached-system:any\n' > "$DEPS_CLOSURE_FILE"
 apt-cache() { echo 'Unexpected apt-cache lookup for supplied dependency' >&2; return 1; }
-export FAIL_ON_MISSING_APT_DEBS=1
 download_apt_debs
 [[ ! -s "$MISSING_DEPS_FILE" ]]
 [[ "$(find "$APT_DEBS_DIR" -name '*.deb' | wc -l)" -eq 2 ]]
+assert_environment_debs
+make_fixture zj-humanoid-rtipc-runtime "$EXTRA_APT_DEBS_DIR"
+cp "$EXTRA_APT_DEBS_DIR/zj-humanoid-rtipc-runtime.deb" "$APT_DEBS_DIR/"
+if assert_environment_debs; then
+  echo 'Vendor package must be rejected' >&2
+  exit 1
+fi
+rm "$APT_DEBS_DIR/zj-humanoid-rtipc-runtime.deb"
 write_apt_repo_index
 awk 'BEGIN {RS=""} {if ($0 !~ /(^|\n)Package:/ || $0 !~ /(^|\n)Filename:/) exit 1; count++} END {if (count != 2) exit 1}' "$APT_DEBS_DIR/Packages"
 echo 'Offline supplied package/provider/cache test passed.'

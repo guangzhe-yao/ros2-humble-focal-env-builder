@@ -1,34 +1,22 @@
-# Pico 离线交付目录
+# Humble 开发环境离线发布
 
-把本目录整体发给下一台 Pico，然后执行：
+本目录仅保留最新开发环境发布包及校验文件，不包含业务模块交付包。
+
+将整个目录复制到 Ubuntu 20.04 amd64 机器，直接执行：
 
 ```bash
-chmod +x install.sh
-./install.sh
+sudo bash install.sh
+source /opt/ros/humble/setup.bash
 ```
 
-`install.sh` 会校验 SHA256、解压离线包、安装 `/opt/ros/humble`，并运行环境
-冒烟测试。安装过程不访问网络。
+也可以只复制版本化 tar.gz 及其 SHA256 文件，解压后执行包内的
+`sudo bash install.sh`。安装器不提供 check 模式，不联网，
+不安装自定义业务包、vendor runtime、SDK 或 Xenomai。
 
-交付目录必须包含：
+最新基础环境：`0.3.3+20261015`。
+发布文件：`ros2-humble-focal-offline-bundle_20261015dev1_amd64.tar.gz`。
 
-```text
-install.sh
-ros2-humble-focal-offline-bundle_<version>_amd64.tar.gz
-ros2-humble-focal-offline-bundle_<version>_amd64.tar.gz.sha256
-```
-
-目标机器要求 Ubuntu 20.04 focal amd64。离线包可以放在任意目录，但安装前缀
-固定为 `/opt/ros/humble`。
-
-当前本地已验证交付包：
-
-```text
-ros2-humble-focal-offline-bundle_202608241111_amd64.tar.gz
-SHA256: 00c7397cc7614661485598aff374a91485b65f65ea04db6de0a984f45d34fb80
-ROS package/marker: 401/401
-offline apt deb: 450
-```
-
-该包已在 `ubuntu:20.04` 断网容器中从空系统完成一键安装和 CycloneDDS 节点
-创建验证。
+约 330 MiB，包含 399 个通用 ROS 包及开发依赖，共 1029 个 DEB。
+已通过全新 Ubuntu 20.04 断网安装、C++ 编译、自定义消息生成和 Python
+类型支持测试。文件校验值和验证范围见 `humble-development-20261015.json`。
+二进制发布文件保存在本目录，不提交到 Git；仓库保存构建脚本和发布清单。

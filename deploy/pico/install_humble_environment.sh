@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-mode="${1:---check}"
-[[ "$mode" == --check || "$mode" == --install ]] || { echo 'Use --check or --install' >&2; exit 64; }
+[[ $# -eq 0 ]] || { echo "Usage: sudo bash $0" >&2; exit 64; }
+[[ "$EUID" -eq 0 ]] || { echo "Run with sudo: sudo bash $0" >&2; exit 77; }
 . /etc/os-release
-[[ "$VERSION_CODENAME/$(dpkg --print-architecture)" == focal/amd64 ]] || exit 65
-[[ "$mode" != --install || "$EUID" -eq 0 ]] || { echo 'Installation requires root' >&2; exit 77; }
+[[ "$VERSION_CODENAME/$(dpkg --print-architecture)" == focal/amd64 ]] || {
+  echo 'This environment requires Ubuntu 20.04 amd64' >&2; exit 65;
+}
 (cd "$ROOT"; sha256sum --quiet -c SHA256SUMS)
 temp="$(mktemp -d)"
 trap 'rm -rf "$temp"' EXIT
@@ -19,19 +20,13 @@ opts=(-o "Dir::Etc::sourcelist=$temp/sources.list"
       -o APT::Sandbox::User=root -o Acquire::Languages=none)
 apt-get "${opts[@]}" update
 mapfile -t roots < "$ROOT/root-packages.txt"
+# These empty markers belong to the obsolete base, not actual business DEBs.
 for obsolete in ros-humble-navi-robot-msgs ros-humble-robot-nodes-py; do
   if [[ "$(dpkg-query -W -f='${db:Status-Abbrev}' "$obsolete" 2>/dev/null || true)" == ii* ]]; then
-    roots+=("$obsolete-")
+    dpkg --remove "$obsolete"
   fi
 done
-apt-get "${opts[@]}" -s --no-install-recommends install "${roots[@]}" > "$temp/plan"
-cat "$temp/plan"
-while read -r removed; do
-  case "$removed" in ros-humble-navi-robot-msgs|ros-humble-robot-nodes-py) ;;
-    *) echo "Refusing unrelated removal: $removed" >&2; exit 1;; esac
-done < <(awk '/^Remv / {print $2}' "$temp/plan")
-if [[ "$mode" == --install ]]; then
-  # No allow-downgrades and no service launch: only the checked package transaction.
-  DEBIAN_FRONTEND=noninteractive apt-get "${opts[@]}" -y --no-install-recommends install "${roots[@]}"
-  dpkg --audit
-fi
+DEBIAN_FRONTEND=noninteractive apt-get "${opts[@]}" -y --no-remove \
+  --no-install-recommends install "${roots[@]}"
+dpkg --audit
+echo 'Humble development environment installed. Run: source /opt/ros/humble/setup.bash'

@@ -1,99 +1,60 @@
-# Pico Humble 构建、发布与离线部署
+# Humble 开发环境构建、发布与离线安装
 
-## 1. 职责边界
+## 边界
 
-本仓库只负责 Pico：
+构建器只管理 Ubuntu 20.04 amd64 的 Humble underlay 和通用开发依赖。
+自定义 robot-state、lowerlimb、上肢接口由各自仓库发布。
+vendor runtime、SDK、Xenomai 用户态和内核由系统负责，均不纳入此发布包。
 
-- 构建 Ubuntu 20.04 amd64 上的 ROS 2 Humble。
-- 生成可安装到 `/opt/ros/humble` 的主 deb 和 marker deb。
-- 收集完整运行时 apt 依赖，生成本地 apt 仓库。
-- 安装 Pico CycloneDDS 配置并验证 ROS 2 环境。
+## 发布源
 
-Orin 的 Ubuntu 22.04、Docker、业务镜像和 Compose 不由本仓库处理。
-
-## 2. 验证现有 Pico
+从干净的 Humble install space 打包，不从已部署整机业务的前缀直接打包：
 
 ```bash
-./deploy/pico/verify_installed_humble_env.sh
+SOURCE_PREFIX=/path/to/clean/humble/install \
+PKG_VERSION=0.3.3+20261015 \
+BUNDLE_VERSION=20261015dev1 \
+bash builder/package_installed_pico.sh
 ```
 
-只有验证通过的 `/opt/ros/humble` 才能作为发布源。
+也可以使用 `builder/bootstrap_pico_humble_env.sh` 从源码构建，
+源码锁定清单在 `profiles/`。新增通用 ROS 包后需更新
+`profiles/humble-environment-packages.txt`，并验证下游编译。
 
-## 3. 从已安装环境发布
+打包只处理暂存副本，不修改源安装树。旧基础环境误带的两个业务包从暂存树排除；
+其他未知 overlay 包直接报错，避免只删包名却留下业务共享库。
+ELF RPATH、安装前缀和 ament 索引沿用已有重定位逻辑。
+
+默认包含 `dev-deps.txt` 中的开发工具。离线 apt 缓存可通过
+`CACHED_APT_DEBS_DIR` 复用；只复制依赖闭包需要的系统包，不复制缓存中的
+业务、vendor 或其他 ROS 发行版 DEB。打包后再次拒绝业务/vendor 包。
+编译机需要 `dpkg-dev`、`patchelf`、`rsync` 和正常的 Focal apt 源。
+
+## 安装
 
 ```bash
-./builder/package_installed_pico.sh
+tar -xzf ros2-humble-focal-offline-bundle_20261015dev1_amd64.tar.gz
+cd ros2-humble-focal-offline-bundle_20261015dev1_amd64
+sudo bash install.sh
+source /opt/ros/humble/setup.bash
 ```
 
-默认行为：
+只有一个直接安装入口，不提供 check 模式。完整性校验自动执行；
+apt 使用包内私有 file 源，不使用在线软件源。
+不清空 `/opt/ros/humble`，不修改系统已有 runtime/SDK/Xenomai，
+不卸载业务 DEB、不安装机器人服务。安装通用系统依赖时，其标准 dpkg
+钩子仍可能调用 ldconfig；既有 vendor 库的符号链接告警不由构建器修复。
 
-- 输入：`/opt/ros/humble`
-- 构建工作目录：`~/ros2_humble_release_build`
-- 源码版本清单：`profiles/third_party.lock.repos`
-- 输出：`release/pico/`
-- 若任何 apt 依赖无法下载，停止出包，不生成不完整的正式包。
+`apt list --installed` 显示安装版本，`apt-cache depends` 显示依赖。
+ROS marker 的版本绑定基础环境版本，实际 ROS 内容由主 DEB 提供。
+源码升级到其他 ROS/Ubuntu 版本需要对应平台重编译，不能混用二进制。
 
-需要自定义时可以覆盖环境变量：
+## 发布验证
 
-```bash
-SOURCE_PREFIX=/opt/ros/humble \
-WORK_DIR="$HOME/ros2_humble_release_build" \
-PKG_VERSION="0.3.1+$(date +%Y%m%d%H%M)" \
-BUNDLE_VERSION="$(date +%Y%m%d%H%M)" \
-./builder/package_installed_pico.sh
-```
+维护者在全新 Ubuntu 20.04 容器内禁用网络，执行完整安装，再运行
+`tests/test_development_release.sh`。该测试检查没有 vendor 目录、
+核对 ROS 包清单，使用 colcon 构建 C++ 节点和自定义消息，并导入 Python
+类型支持、执行测试节点。测试夹具不会进入基础环境或发布包。
 
-## 4. 产物是否依赖构建路径
-
-不依赖构建机的用户名和工作目录。出包过程会：
-
-- 展开 install space 内的符号链接。
-- 将文本中的构建前缀改写为 `/opt/ros/humble`。
-- 改写 ELF RPATH/RUNPATH。
-- 重新生成单前缀 `setup.*` 文件。
-- 排除 `__pycache__` 和 `.pyc`。
-
-因此 tar 包可放在目标 Pico 的任意目录运行。它不是任意系统通用包，目标机器仍
-必须是 Ubuntu 20.04 focal amd64，安装位置固定为 `/opt/ros/humble`。
-
-## 5. 一键离线部署
-
-将整个 `release/pico/` 目录复制到目标 Pico：
-
-```bash
-rsync -aL release/pico/ nav01@<target-ip>:~/pico_humble_release/
-```
-
-目标机执行：
-
-```bash
-cd ~/pico_humble_release
-./install.sh
-```
-
-安装器不执行 `apt update`，只使用 tar 包内的 `apt_debs/` 本地仓库。安装前若
-目标系统自身已经存在断裂的 dpkg/apt 状态，安装器会停止并要求先修复基础系统。
-
-## 6. 从零构建
-
-当没有可复用的 `/opt/ros/humble` 时，在联网的 Ubuntu 20.04 amd64 构建机执行：
-
-```bash
-./builder/bootstrap_pico_humble_env.sh
-```
-
-正式复现应使用 `profiles/third_party.lock.repos`。新增或升级第三方源码后，先按
-`docs/adding-third-party-packages.md` 完成构建和下游验证，再更新 lock 文件。
-
-## 7. 发布检查
-
-正式交付前至少确认：
-
-```bash
-sha256sum -c release/pico/ros2-humble-focal-offline-bundle_*_amd64.tar.gz.sha256
-./tests/test_offline_bundle_dependency_collection.sh
-bash -n builder/*.sh builder/package/*.sh deploy/pico/*.bash release/pico/install.sh
-```
-
-最终还应在一台非出包机、断网状态下运行 `release/pico/install.sh`。这是完整离线
-能力的最终验收；仅在原构建机上解包不能替代该测试。
+这些是发布前内部测试，不要求部署用户额外执行验证命令。
+rosdep 网络索引和任意业务项目的专用依赖不包含在开发环境的离线保证内。

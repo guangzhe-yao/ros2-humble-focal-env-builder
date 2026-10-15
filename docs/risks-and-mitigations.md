@@ -102,9 +102,9 @@ Other users should be able to compile their own overlays against the deployed
 environment if all of the following are true:
 
 - They are on Ubuntu 20.04 amd64 with the same system dependency baseline.
-- They installed the generated bundle with `install_ros2_humble.sh`.
+- They installed the generated offline environment with `sudo bash install.sh`.
 - They source `/opt/ros/humble/setup.bash`.
-- They installed optional dev tools from `dev-deps.txt`.
+- The release includes development tools from `dev-deps.txt` by default.
 - Their own missing ROS dependencies are either already included in the bundle or
   included as source in their workspace.
 
