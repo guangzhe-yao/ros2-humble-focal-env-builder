@@ -33,6 +33,9 @@ if git -C "$REPO_ROOT" grep --untracked --exclude-standard -nE \
     -- . ':!*.repos' ':!tests/test_repository_layout.sh'; then
   echo "Obsolete path reference found" >&2
   exit 1
+else
+  status=$?
+  [[ "$status" -eq 1 ]] || exit "$status"
 fi
 
 echo "Repository layout test passed."

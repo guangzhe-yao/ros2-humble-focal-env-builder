@@ -20,6 +20,7 @@ BUNDLE_ROOT="$OUT_DIR/$BUNDLE_NAME"
 APT_DEBS_DIR="$BUNDLE_ROOT/apt_debs"
 BUNDLE_ARTIFACT_DIR="$BUNDLE_ROOT/artifacts"
 DEPS_ROOT_FILE="$BUNDLE_ROOT/apt-root-deps.txt"
+DEPS_CANDIDATES_FILE="$BUNDLE_ROOT/apt-dependency-candidates.txt"
 DEPS_CLOSURE_FILE="$BUNDLE_ROOT/apt-closure-deps.txt"
 MISSING_DEPS_FILE="$BUNDLE_ROOT/apt-unavailable-candidates.txt"
 APT_DOWNLOAD_ERRORS_FILE="$BUNDLE_ROOT/apt-download-errors.log"
@@ -55,12 +56,35 @@ require_artifacts() {
     printf '  %s\n' "${missing[@]}" >&2
     exit 1
   fi
-
+  local -a bases=("$ARTIFACT_DIR"/ros2-humble-focal-desktop-source_*_"$PKG_ARCH".deb)
+  local -a markers=("$ARTIFACT_DIR"/ros-humble-package-markers_*_"$PKG_ARCH".tar.gz)
+  [[ ${#bases[@]} -eq 1 && ${#markers[@]} -eq 1 ]] || {
+    echo 'Expected exactly one base DEB and one matching marker archive' >&2; return 1;
+  }
+  local version architecture name
+  version="$(dpkg-deb -f "${bases[0]}" Version)"
+  architecture="$(dpkg-deb -f "${bases[0]}" Architecture)"
+  name="$(dpkg-deb -f "${bases[0]}" Package)"
+  [[ "$name" == ros2-humble-focal-desktop-source && "$architecture" == "$PKG_ARCH" &&
+     "${bases[0]}" == "$ARTIFACT_DIR/${name}_${version}_${architecture}.deb" &&
+     "${markers[0]}" == "$ARTIFACT_DIR/ros-humble-package-markers_${version}_${architecture}.tar.gz" ]] || {
+    echo 'Base DEB metadata and marker archive version/architecture must match' >&2; return 1;
+  }
 }
 
 prepare_bundle_root() {
+  [[ "$BUNDLE_NAME" =~ ^[a-zA-Z0-9][a-zA-Z0-9._+-]*$ ]] || {
+    echo 'BUNDLE_NAME must be a single directory name, not a path' >&2; return 1;
+  }
+  local destination
+  for destination in "$BUNDLE_ROOT" "$BUNDLE_ROOT.tar.gz" "$BUNDLE_ROOT.tar.gz.sha256"; do
+    [[ ! -e "$destination" && ! -L "$destination" ]] || {
+      echo "Refusing to replace existing output: $destination; use a new version" >&2; return 1;
+    }
+  done
   log "Preparing offline bundle root: $BUNDLE_ROOT"
-  rm -rf "$BUNDLE_ROOT"
+  mkdir -p "$OUT_DIR"
+  mkdir "$BUNDLE_ROOT" || return 1
   mkdir -p "$APT_DEBS_DIR" "$BUNDLE_ARTIFACT_DIR"
   cp "$ARTIFACT_DIR"/ros2-humble-focal-desktop-source_*_"$PKG_ARCH".deb "$APT_DEBS_DIR/"
   local marker_temp metadata
@@ -98,22 +122,24 @@ emit_deb_dependency_names() {
   local field deps
 
   for field in Pre-Depends Depends; do
-    deps="$(dpkg-deb -f "$deb" "$field" 2>/dev/null || true)"
-    printf '%s\n' "$deps" \
-      | tr ',' '\n' \
-      | awk '
-          {
-            sub(/\|.*/, "", $0)
-            sub(/\(.*/, "", $0)
-            gsub(/^[ \t]+|[ \t]+$/, "", $0)
-            split($0, words, /[ \t]+/)
-            if (words[1] != "") print words[1]
-          }
-        '
+    deps="$(dpkg-deb -f "$deb" "$field")"
+    [[ -n "$deps" ]] || continue
+    # Dpkg::Deps comes with dpkg-dev, already required by dpkg-scanpackages.
+    perl -MDpkg::Deps -e '
+      my $deps = deps_parse($ARGV[0]);
+      defined $deps or die "Invalid DEB dependencies\n";
+      deps_iterate($deps, sub {
+        my ($dep) = @_;
+        print $dep->{package};
+        print ":$dep->{archqual}" if defined $dep->{archqual};
+        print "\n";
+        return 1;
+      });
+    ' "$deps"
   done
 }
 
-emit_artifact_deb_root_deps() {
+emit_artifact_deb_candidates() {
   local deb
   while IFS= read -r -d '' deb; do
     emit_deb_dependency_names "$deb"
@@ -123,7 +149,8 @@ emit_artifact_deb_root_deps() {
   )
 }
 
-emit_extra_deb_root_deps() {
+emit_extra_deb_inputs() {
+  local mode="$1"
   if [ -z "$EXTRA_APT_DEBS_DIR" ]; then
     return 0
   fi
@@ -138,8 +165,11 @@ emit_extra_deb_root_deps() {
       exit 1
     fi
     while IFS= read -r -d '' deb; do
-      dpkg-deb -f "$deb" Package 2>/dev/null || true
-      emit_deb_dependency_names "$deb"
+      if [[ "$mode" == roots ]]; then
+        dpkg-deb -f "$deb" Package
+      else
+        emit_deb_dependency_names "$deb"
+      fi
     done < <(find "$extra_dir" -maxdepth 1 -type f -name '*.deb' -print0)
   done
 }
@@ -148,15 +178,19 @@ collect_root_deps() {
   log "Collecting root apt dependency package names"
   {
     sed '/^$/d' "$ARTIFACT_DIR/runtime-deps.txt"
-    # The deb control file is authoritative when reusing older artifacts.
-    emit_artifact_deb_root_deps
     if [ "$INCLUDE_DEV_DEPS" = "1" ] && [ -f "$ARTIFACT_DIR/dev-deps.txt" ]; then
       sed '/^$/d' "$ARTIFACT_DIR/dev-deps.txt"
     fi
     emit_extra_root_deps_files
-    emit_extra_deb_root_deps
+    emit_extra_deb_inputs roots
   } | awk -v re="$APT_EXCLUDED_PACKAGES_REGEX" 'NF && (re == "" || $0 !~ re)' \
     | sort -u > "$DEPS_ROOT_FILE"
+  # Alternatives are download candidates, not independent install requests.
+  {
+    cat "$DEPS_ROOT_FILE"
+    emit_artifact_deb_candidates
+    emit_extra_deb_inputs candidates
+  } | sort -u > "$DEPS_CANDIDATES_FILE"
 }
 
 copy_extra_apt_debs() {
@@ -223,7 +257,7 @@ resolve_apt_closure() {
   local -a queue=()
   local pkg dep candidate
   declare -A seen=()
-  mapfile -t queue < "$DEPS_ROOT_FILE"
+  mapfile -t queue < "$DEPS_CANDIDATES_FILE"
   : > "$DEPS_CLOSURE_FILE"
 
   while [ "${#queue[@]}" -gt 0 ]; do
@@ -442,16 +476,23 @@ validate_offline_dependencies() (
     >> "$BUNDLE_ROOT/dependency-resolution.log" 2>&1
 )
 
-make_tarball() {
+make_tarball() (
   log "Creating tarball"
   local tarball="$OUT_DIR/$BUNDLE_NAME.tar.gz"
-  tar -C "$OUT_DIR" -czf "$tarball" "$BUNDLE_NAME"
-  (cd "$OUT_DIR" && sha256sum "$(basename "$tarball")" > "$(basename "$tarball").sha256")
-  ln -sfn "$(basename "$tarball")" "$OUT_DIR/ros2-humble-focal-offline-bundle_latest_${PKG_ARCH}.tar.gz"
-  ln -sfn "$(basename "$tarball").sha256" "$OUT_DIR/ros2-humble-focal-offline-bundle_latest_${PKG_ARCH}.tar.gz.sha256"
-  log "Offline bundle created: $tarball"
+  [[ ! -e "$tarball" && ! -L "$tarball" && ! -e "$tarball.sha256" && ! -L "$tarball.sha256" ]] || {
+    echo "Refusing to replace release: $tarball" >&2; return 1;
+  }
+  local temp digest
+  temp="$(mktemp "$OUT_DIR/.bundle.XXXXXX")"
+  trap 'rm -f "$temp" "$temp.sha256"' EXIT
+  tar -C "$OUT_DIR" -czf "$temp" "$BUNDLE_NAME" || return 1
+  digest="$(sha256sum "$temp")" || return 1
+  printf '%s  %s\n' "${digest%% *}" "$(basename "$tarball")" > "$temp.sha256" || return 1
+  ln "$temp" "$tarball" || return 1
+  ln "$temp.sha256" "$tarball.sha256" || return 1
+  log "Offline candidate created (latest unchanged): $tarball"
   log "SHA256: $tarball.sha256"
-}
+)
 
 main() {
   require_focal_amd64

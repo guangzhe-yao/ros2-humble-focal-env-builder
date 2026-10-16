@@ -35,7 +35,8 @@ copy_artifact_metadata() {
   if [ -f "$SOURCE_LOCK" ]; then
     cp "$SOURCE_LOCK" "$artifacts/source-lock.repos"
   else
-    cp "$PROFILE" "$artifacts/source-lock.repos"
+    rm -f "$artifacts/source-lock.repos"
+    echo 'Warning: no actual source lock provided; build provenance is unknown' >&2
   fi
 }
 
@@ -62,4 +63,6 @@ main() {
   log "Done. Artifacts are under: $OUT_DIR/artifacts"
 }
 
-main "$@"
+if [ "${BASH_SOURCE[0]}" = "$0" ]; then
+  main "$@"
+fi

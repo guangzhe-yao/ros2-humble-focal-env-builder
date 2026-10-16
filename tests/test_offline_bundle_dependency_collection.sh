@@ -34,7 +34,19 @@ source "$REPO_ROOT/builder/package/build_offline_humble_bundle.sh"
 collect_root_deps
 
 grep -Fxq bash "$DEPS_ROOT_FILE"
-grep -Fxq libasio-dev "$DEPS_ROOT_FILE"
-grep -Fxq libfoo-dev "$DEPS_ROOT_FILE"
+grep -Fxq libasio-dev "$DEPS_CANDIDATES_FILE"
+grep -Fxq libfoo-dev "$DEPS_CANDIDATES_FILE"
+grep -Fxq libfoo-compat "$DEPS_CANDIDATES_FILE"
+if grep -Eq '^lib(asio|foo)' "$DEPS_ROOT_FILE"; then
+  echo 'DEB dependencies must not be promoted into mandatory roots' >&2
+  exit 1
+fi
+
+apt-cache() {
+  [[ "$1" == policy ]] || return 1
+  printf '  Candidate: (none)\n'
+}
+resolve_apt_closure
+cmp "$DEPS_CANDIDATES_FILE" "$DEPS_CLOSURE_FILE"
 
 echo "Offline bundle dependency collection test passed."

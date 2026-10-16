@@ -30,6 +30,15 @@ ELF RPATH、安装前缀和 ament 索引沿用已有重定位逻辑。
 业务、vendor 或其他 ROS 发行版 DEB。打包后再次拒绝业务/vendor 包。
 编译机需要 `dpkg-dev`、`patchelf`、`rsync` 和正常的 Focal apt 源。
 
+主 DEB 和 marker 归档必须各一个，名称、版本、架构一致。
+同名离线输出目录或归档已存在时拒绝覆盖；重试请使用新版本/新输出目录，
+不要为重试而删除源安装空间。`SOURCE_LOCK` 应指向真实构建来源记录；
+缺失时不生成 `source-lock.repos`，并明确报告来源未知。
+
+`package_installed_pico.sh` 只生成候选包，不自动切换 latest。
+`A | B` 两项均参与下载候选收集，但不会变成必须同时安装的根依赖。
+离线 apt 求解仍保留 DEB 中的版本约束和 Pre-Depends。
+
 ## 安装
 
 ```bash
@@ -58,3 +67,37 @@ ROS marker 的版本绑定基础环境版本，实际 ROS 内容由主 DEB 提�
 
 这些是发布前内部测试，不要求部署用户额外执行验证命令。
 rosdep 网络索引和任意业务项目的专用依赖不包含在开发环境的离线保证内。
+
+先运行不安装软件、不联网的维护者回归：
+
+```bash
+bash tests/run_unit_tests.sh
+```
+
+候选包发生变化时，在本机已有 `ubuntu:20.04` 镜像的前提下，使用断网容器
+运行安装及开发验收，不能将该命令改成在宿主机执行包内安装脚本：
+
+```bash
+candidate=ros2-humble-focal-offline-bundle_20261016dev1_amd64.tar.gz
+mkdir -p log
+docker run --rm --network none \
+  -v "$PWD:/validation:ro" -e CANDIDATE="$candidate" \
+  ubuntu:20.04 bash -c \
+  'bash /validation/release/pico/install.sh "/validation/release/pico/$CANDIDATE" &&
+   bash /validation/tests/test_development_release.sh' \
+  > "log/$candidate.acceptance.log" 2>&1
+```
+
+**仅在人工审阅变更、SHA256、验收日志和未验证项后**，维护者更新发布清单，
+再明确选中已审核的候选（下面变量需替换为实际已审核版本）：
+
+```bash
+cd release/pico
+candidate=ros2-humble-focal-offline-bundle_20261016dev1_amd64.tar.gz
+sha256sum -c "$candidate.sha256" &&
+ln -sfn "$candidate" ros2-humble-focal-offline-bundle_latest_amd64.tar.gz &&
+ln -sfn "$candidate.sha256" ros2-humble-focal-offline-bundle_latest_amd64.tar.gz.sha256
+```
+
+此处是维护者发布流程，不是部署用户需要执行的额外 check 步骤。
+详细边界和审核责任见 [质量契约](quality-contract.zh-CN.md)。

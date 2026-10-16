@@ -40,3 +40,7 @@ SOURCE_PREFIX=/path/to/clean/humble/install bash builder/package_installed_pico.
 详见[构建与发布](docs/build-release-deploy.zh-CN.md)。
 发布前内部测试保留，包括断网安装、C++ 编译和自定义消息生成，
 但不会作为用户安装流程中的额外步骤。
+
+构建命令只生成候选包，不覆盖已有版本或自动更新 latest。
+维护者运行 `bash tests/run_unit_tests.sh`，按
+[质量契约](docs/quality-contract.zh-CN.md) 完成自动测试及人工审核后再发布。

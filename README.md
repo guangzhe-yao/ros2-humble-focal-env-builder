@@ -39,3 +39,8 @@ written under `release/pico/`; binary payloads are not committed to Git.
 See [build and release guide](docs/build-release-deploy.zh-CN.md).
 Maintainer tests include a network-disabled clean install and a real colcon
 build of C++ code plus generated message interfaces; tests are not an installation step.
+
+Builds create candidates without overwriting versions or promoting `latest`.
+Run `bash tests/run_unit_tests.sh` for non-installing maintainer regression tests.
+See the [quality contract](docs/quality-contract.zh-CN.md) for acceptance criteria
+and the separate human review required before promoting a release.

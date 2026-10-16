@@ -38,6 +38,8 @@ if command -v patchelf >/dev/null 2>&1; then
     echo "RPATH relocation failed: $actual_rpath" >&2
     exit 1
   fi
+else
+  echo 'SKIP: ELF RPATH case requires patchelf; prefix normalization was tested.'
 fi
 
 echo "Relocation helper test passed."
