@@ -1,0 +1,88 @@
+{
+  "release": "20261111dev3",
+  "status": "candidate_pending_human_review",
+  "base_version": "0.3.4+20261111",
+  "platform": "Ubuntu 20.04 amd64",
+  "installer": "ros2-humble-focal-offline-bundle_20261111dev3_amd64.run",
+  "installer_bytes": 347280738,
+  "sha256": "5e722cc8579b58af996b7fa406f1c622271c6ebb3ab3aad02ed1351bff6e3374",
+  "installation": "sudo bash ros2-humble-focal-offline-bundle_20261111dev3_amd64.run",
+  "ros_package_count": 404,
+  "deb_count": 1038,
+  "scope": "Pico upstream ROS Humble environment and general runtime/development dependencies; no default Gazebo",
+  "provenance": {
+    "status": "partial",
+    "base": "20261015dev1 binary release; full original source build not verified",
+    "rebuilt_repository": "https://github.com/ros-teleop/teleop_tools.git",
+    "rebuilt_commit": "ac63b92477232d8fd73fa9db938ead6735c31971",
+    "excluded_from_new_copy_only": [
+      "include/zj_humanoid/",
+      "lib/python3.8/site-packages/zj_humanoid/"
+    ]
+  },
+  "verification": {
+    "local_unit_tests": "10 shell groups and 9 Python tests passed; local patchelf case skipped",
+    "focal_network_none_unit_tests": "10 shell groups and 9 Python tests passed, including ELF RPATH relocation",
+    "empty_status_offline_apt_dependency_resolution": "passed",
+    "installer_sha256_on_pico": "passed",
+    "fresh_focal_network_none_install": "passed in local container pico-humble-dev3-offline-20261111",
+    "native_pico_install_and_development": "passed on actual host filesystem, not in a container",
+    "native_run_installer_repeat": "passed; 0 upgraded, 0 newly installed, 0 removed",
+    "installed_ros_allowlist_and_required_packages": "passed",
+    "known_vendor_and_business_residue_check": "passed",
+    "elf_dependency_check": "823 files on native Pico with sourced environment and OGRE private plugin directory; container scan also passed",
+    "ogre_plugin_runtime_loading": "PCZ loaded globally then OctreeZone, matching plugins.cfg; passed with normal sourced environment",
+    "joy_teleop_import_and_teleop_tools_type_support": "passed",
+    "cpp_and_custom_message_build": "passed",
+    "python_generated_type_support": "passed",
+    "rclpy_and_cpp_node_smoke": "passed",
+    "controller_interface_plugin_build_load_update": "passed; NONE/NONE interfaces, no hardware",
+    "colcon_test": "2 tests, 0 errors, 0 failures, 0 skipped",
+    "container_exit_code": 0,
+    "host_upgrade_guard": "default guard retained; explicitly authorized one-time legacy cleanup performed outside installer",
+    "host_dpkg_audit_after_validation": "no output"
+  },
+  "device_validation": {
+    "host": "nav01@192.168.217.66",
+    "mode": "native host deployment; separate network namespace without external connectivity",
+    "development_test_user": "nav01",
+    "ros_test_isolation": "private loopback, ROS_LOCALHOST_ONLY=1, ROS_DOMAIN_ID=230; no hardware interfaces",
+    "workspace": "/home/nav01/pico-humble-validation-20261111.uPprlk",
+    "native_host_upgraded": true,
+    "native_base_version_after_validation": "0.3.4+20261111",
+    "legacy_business_packages": "navi_robot_msgs and robot_nodes_py removed from Humble prefix; corresponding markers removed",
+    "backup_created": false,
+    "backup_policy": "User explicitly requested no native backup",
+    "authorized_removals": ["ros-humble-navi-robot-msgs", "ros-humble-robot-nodes-py"],
+    "other_package_removals": 0,
+    "existing_non_ros_package_upgrades": 0,
+    "noetic_package_versions": "unchanged",
+    "noetic_process_pids_and_start_times": "unchanged across deployment",
+    "robot_control_process_operations": "none"
+  },
+  "logs": [
+    "log/pico-20261111-native-unit-tests.log",
+    "log/pico-20261111-dev3-focal-unit-tests.log",
+    "log/pico-20261111-dev3-repack.log",
+    "log/pico-20261111-dev3-offline-acceptance.log",
+    "log/pico-20261111-dev3-offline-recheck.log",
+    "log/pico-20261111-native-install.log",
+    "log/pico-20261111-native-acceptance.log",
+    "log/pico-20261111-native-development.log"
+  ],
+  "earlier_attempts": {
+    "20261111dev1": "Clean-container install passed; native simulation requested unnecessary system upgrades and 76 removals. Not executed; superseded.",
+    "20261111dev2": "Pinning existing system roots prevented required library upgrades on a fresh Focal image. Container install failed; never installed on native host.",
+    "native_standalone_ldd": "OctreeZone needs the PCZ plugin loaded first. Confirmed installed file and plugins.cfg ordering; real dynamic loading passed. No binary change or missing-package suppression."
+  },
+  "limitations": [
+    "Not a full source rebuild; upstream package identity is not proof of all legacy binary sources.",
+    "Other hosts with mixed legacy bases still require separately authorized migration or removal; the installer does not delete customer packages automatically.",
+    "No robot motion, physical joystick, GUI, DDS peer, SDK, Xenomai or hardware acceptance performed.",
+    "Static project scanning does not resolve all dynamic or vendor-specific dependencies.",
+    "Native verification covers this Pico and generic development fixtures, not arbitrary customer projects or hosts."
+  ],
+  "human_review": "pending",
+  "latest_promoted": false,
+  "historical_releases_modified": false
+}

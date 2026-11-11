@@ -94,7 +94,7 @@ prepare_bundle_root() {
   done
   find "$marker_temp" -type f -name '*.deb' -exec cp -t "$APT_DEBS_DIR" {} +
   rm -rf "$marker_temp"
-  for metadata in runtime-deps.txt dev-deps.txt source-lock.repos third_party.repos rosdep-humble-focal-source-build.yaml; do
+  for metadata in runtime-deps.txt dev-deps.txt source-lock.repos third_party.repos build-provenance.json rosdep-humble-focal-source-build.yaml; do
     [[ ! -f "$ARTIFACT_DIR/$metadata" ]] || cp "$ARTIFACT_DIR/$metadata" "$BUNDLE_ARTIFACT_DIR/"
   done
 }
@@ -431,6 +431,13 @@ write_offline_installer() {
   local repo
   repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
   cp "$repo/deploy/pico/install_humble_environment.sh" "$BUNDLE_ROOT/install.sh"
+  local base
+  local -a bases=("$APT_DEBS_DIR"/ros2-humble-focal-desktop-source_*.deb)
+  [[ ${#bases[@]} -eq 1 && -f "${bases[0]}" ]] || { echo 'Expected one base DEB' >&2; return 1; }
+  base="${bases[0]}"
+  dpkg-deb --fsys-tarfile "$base" | tar -tf - \
+    | awk '/\/share\/ament_index\/resource_index\/packages\/[^/]+$/ {sub(".*/", ""); print}' \
+    | sort -u > "$BUNDLE_ROOT/ros-packages.txt"
   chmod +x "$BUNDLE_ROOT/install.sh"
   {
     cat "$DEPS_ROOT_FILE"
@@ -445,10 +452,16 @@ write_readme() {
   local repo
   repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
   cp "$repo/deploy/pico/README_OFFLINE.zh-CN.md" "$BUNDLE_ROOT/README.md"
+  mkdir -p "$BUNDLE_ROOT/configuration"
+  cp "$repo"/profiles/apt-*.txt "$repo"/profiles/pico-*.txt \
+    "$repo/profiles/ros1-migration.json" "$repo/profiles/excluded-components.txt" \
+    "$repo/profiles/humble-environment-packages.txt" "$BUNDLE_ROOT/configuration/"
+  python3 "$repo/builder/package/write_inventory.py" "$BUNDLE_ROOT" > "$BUNDLE_ROOT/manifest.json"
   (
     cd "$BUNDLE_ROOT"
-    find apt_debs -type f -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS
-    sha256sum install.sh root-packages.txt README.md >> SHA256SUMS
+    find apt_debs artifacts configuration -type f -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS
+    sha256sum manifest.json >> SHA256SUMS
+    sha256sum install.sh root-packages.txt ros-packages.txt README.md >> SHA256SUMS
   )
 }
 
@@ -488,6 +501,7 @@ make_tarball() (
   tar -C "$OUT_DIR" -czf "$temp" "$BUNDLE_NAME" || return 1
   digest="$(sha256sum "$temp")" || return 1
   printf '%s  %s\n' "${digest%% *}" "$(basename "$tarball")" > "$temp.sha256" || return 1
+  chmod 0644 "$temp" "$temp.sha256" || return 1
   ln "$temp" "$tarball" || return 1
   ln "$temp.sha256" "$tarball.sha256" || return 1
   log "Offline candidate created (latest unchanged): $tarball"

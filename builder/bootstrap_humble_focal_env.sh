@@ -18,7 +18,7 @@ UNIFIED_WORK_DIR="${UNIFIED_WORK_DIR:-$HOME/ros2_humble_unified}"
 PROFILE="${PROFILE:-$REPO_ROOT/profiles/third_party.lock.repos}"
 PKG_VERSION="${PKG_VERSION:-0.3.3+$(date +%Y%m%d%H%M)}"
 INSTALL_PREFIX="${INSTALL_PREFIX:-/opt/ros/humble}"
-INSTALL_AFTER_BUILD="${INSTALL_AFTER_BUILD:-1}"
+INSTALL_AFTER_BUILD="${INSTALL_AFTER_BUILD:-0}"
 CLEAN_BASE="${CLEAN_BASE:-0}"
 REBUILD_BASE="${REBUILD_BASE:-0}"
 COLCON_PARALLEL_WORKERS="${COLCON_PARALLEL_WORKERS:-2}"
@@ -132,6 +132,8 @@ install_apt_prerequisites() {
   sudo apt-get update
   sudo apt-get install -y \
     build-essential \
+    file \
+    dpkg-dev \
     git \
     libopencv-dev \
     patchelf \
@@ -247,8 +249,8 @@ update_rosdep_cache() {
 
 import_ros2_sources() {
   if [ "$CLEAN_BASE" = "1" ]; then
-    log "Cleaning base ROS 2 workspace: $WORK_DIR"
-    rm -rf "$BASE_SRC_DIR" "$BASE_PREFIX" "$BASE_BUILD_DIR" "$BASE_LOG_DIR" "$BASE_IMPORT_MARKER" "$BASE_BUILD_MARKER"
+    echo 'Automatic cleaning is disabled; use a fresh WORK_DIR or explicitly maintain old outputs separately' >&2
+    return 1
   fi
 
   mkdir -p "$BASE_SRC_DIR"
@@ -256,9 +258,8 @@ import_ros2_sources() {
     log "Using existing ROS 2 source checkout: $BASE_SRC_DIR"
   else
     if find "$BASE_SRC_DIR" -mindepth 1 -maxdepth 1 | read -r _; then
-      log "Incomplete ROS 2 source import found; cleaning $BASE_SRC_DIR before retry"
-      rm -rf "$BASE_SRC_DIR"
-      mkdir -p "$BASE_SRC_DIR"
+      echo "Incomplete source import preserved: $BASE_SRC_DIR; use a fresh workspace" >&2
+      return 1
     fi
     if [ ! -s "$ROS2_REPOS_FILE" ]; then
       log "Downloading ROS 2 Humble repos file: $ROS2_REPOS_URL"
@@ -298,12 +299,18 @@ install_ros2_source_dependencies() {
 build_base_humble() {
   if [ -f "$BASE_BUILD_MARKER" ] && [ -f "$BASE_PREFIX/setup.bash" ] && [ "$REBUILD_BASE" != "1" ]; then
     log "Base Humble install space already exists: $BASE_PREFIX"
-    log "Set REBUILD_BASE=1 or CLEAN_BASE=1 to rebuild it."
+    log "Use fresh workspace/output paths for a rebuild; existing files are preserved."
     return 0
   fi
 
   log "Building ROS 2 Humble base install space into $BASE_PREFIX"
-  rm -rf "$BASE_PREFIX" "$BASE_BUILD_DIR" "$BASE_LOG_DIR" "$BASE_BUILD_MARKER"
+  local path
+  for path in "$BASE_PREFIX" "$BASE_BUILD_DIR" "$BASE_LOG_DIR" "$BASE_BUILD_MARKER"; do
+    [[ ! -e "$path" && ! -L "$path" ]] || {
+      echo "Refusing to clear existing path: $path; use a fresh workspace" >&2
+      return 1
+    }
+  done
   mkdir -p "$WORK_DIR"
   cd "$WORK_DIR"
   export CMAKE_BUILD_PARALLEL_LEVEL
@@ -411,4 +418,6 @@ main() {
   print_summary
 }
 
-main "$@"
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  main "$@"
+fi

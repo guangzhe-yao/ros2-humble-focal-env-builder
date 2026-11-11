@@ -50,12 +50,12 @@ require_focal_amd64() {
 
 require_tools() {
   local missing=()
-  for tool in git vcs colcon rosdep rsync dpkg-deb patchelf python3 cmake curl; do
+  for tool in git vcs colcon rosdep rsync dpkg-deb patchelf file python3 cmake curl; do
     command -v "$tool" >/dev/null 2>&1 || missing+=("$tool")
   done
   if [ "${#missing[@]}" -gt 0 ]; then
     echo "Missing tools: ${missing[*]}" >&2
-    echo "Install build host dependencies first: sudo apt-get install -y build-essential git python3-vcstool python3-rosdep python3-colcon-common-extensions python3-pip patchelf rsync" >&2
+    echo "Install build host dependencies first: sudo apt-get install -y build-essential git python3-vcstool python3-rosdep python3-colcon-common-extensions python3-pip patchelf file rsync" >&2
     exit 1
   fi
 }
@@ -142,7 +142,13 @@ prepare_workspace() {
   fi
 
   log "Preparing clean unified install prefix: $UNIFIED_PREFIX"
-  rm -rf "$UNIFIED_PREFIX" "$BUILD_DIR" "$LOG_DIR" "$SRC_DIR" "$OUT_DIR"
+  local path
+  for path in "$UNIFIED_PREFIX" "$BUILD_DIR" "$LOG_DIR" "$SRC_DIR" "$OUT_DIR"; do
+    [[ ! -e "$path" && ! -L "$path" ]] || {
+      echo "Refusing to clear existing path: $path; select a fresh workspace" >&2
+      return 1
+    }
+  done
   mkdir -p "$WORK_DIR" "$SRC_DIR" "$OUT_DIR"
   rsync -aL --delete \
     --exclude '__pycache__/' \
@@ -258,9 +264,9 @@ package_unified_prefix() {
 main() {
   require_focal_amd64
   require_tools
+  prepare_workspace
   configure_rosdep_network
   ensure_new_cmake
-  prepare_workspace
   import_sources
   check_duplicate_packages
   install_dependencies
@@ -271,4 +277,6 @@ main() {
   log "Done. Artifacts are under: $OUT_DIR/artifacts"
 }
 
-main "$@"
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  main "$@"
+fi

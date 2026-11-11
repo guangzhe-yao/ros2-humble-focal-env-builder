@@ -9,6 +9,7 @@ OFFLINE_OUT_DIR="${OFFLINE_OUT_DIR:-$OUT_DIR/artifacts/offline}"
 BUILD_BASE="${BUILD_BASE:-$HOME/ros2_humble/build_deploy}"
 PROFILE="${PROFILE:-$REPO_ROOT/profiles/third_party.lock.repos}"
 SOURCE_LOCK="${SOURCE_LOCK:-$OUT_DIR/source-lock.repos}"
+BUILD_PROVENANCE="${BUILD_PROVENANCE:-}"
 PKG_NAME="${PKG_NAME:-ros2-humble-focal-desktop-source}"
 PKG_VERSION="${PKG_VERSION:-0.3.3+$(date +%Y%m%d%H%M)}"
 INSTALL_PREFIX="${INSTALL_PREFIX:-/opt/ros/humble}"
@@ -37,6 +38,9 @@ copy_artifact_metadata() {
   else
     rm -f "$artifacts/source-lock.repos"
     echo 'Warning: no actual source lock provided; build provenance is unknown' >&2
+  fi
+  if [[ -n "$BUILD_PROVENANCE" ]]; then
+    python3 -m json.tool "$BUILD_PROVENANCE" > "$artifacts/build-provenance.json"
   fi
 }
 

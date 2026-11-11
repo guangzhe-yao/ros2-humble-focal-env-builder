@@ -1,4 +1,8 @@
 repositories:
+  teleop_tools:
+    type: git
+    url: https://github.com/ros-teleop/teleop_tools.git
+    version: ac63b92477232d8fd73fa9db938ead6735c31971
   RSL:
     type: git
     url: https://github.com/PickNikRobotics/RSL.git

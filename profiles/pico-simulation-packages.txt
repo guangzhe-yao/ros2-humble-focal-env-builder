@@ -1,0 +1,7 @@
+# Optional ROS 2 equivalents for the remaining ROS 1 simulation sources.
+# Not included in the default hardware/development release.
+gazebo_dev
+gazebo_msgs
+gazebo_plugins
+gazebo_ros
+gazebo_ros2_control

@@ -1,0 +1,1963 @@
+{
+  "registry_url": "https://github.com/ros/rosdistro/blob/master/humble/distribution.yaml",
+  "registry_git_blob": "77ee2017b73541b69aeea91c54da2cf4763837c0",
+  "registry_sha256": "33e24f286d58322ec9cf67d15e5de0fdff30dd8f08cfa9d88020ec4c02adcae4",
+  "scope": "Reviewed Pico environment and migration candidates; release membership is not a vendor SDK approval.",
+  "packages": {
+    "ackermann_msgs": {
+      "repository": "ackermann_msgs",
+      "url": "https://github.com/ros-drivers/ackermann_msgs.git",
+      "humble_release": "2.0.2-3"
+    },
+    "ackermann_steering_controller": {
+      "repository": "ros2_controllers",
+      "url": "https://github.com/ros-controls/ros2_controllers.git",
+      "humble_release": "2.54.1-1"
+    },
+    "action_msgs": {
+      "repository": "rcl_interfaces",
+      "url": "https://github.com/ros2/rcl_interfaces.git",
+      "humble_release": "1.2.3-1"
+    },
+    "action_tutorials_cpp": {
+      "repository": "demos",
+      "url": "https://github.com/ros2/demos.git",
+      "humble_release": "0.20.10-1"
+    },
+    "action_tutorials_interfaces": {
+      "repository": "demos",
+      "url": "https://github.com/ros2/demos.git",
+      "humble_release": "0.20.10-1"
+    },
+    "action_tutorials_py": {
+      "repository": "demos",
+      "url": "https://github.com/ros2/demos.git",
+      "humble_release": "0.20.10-1"
+    },
+    "actionlib_msgs": {
+      "repository": "common_interfaces",
+      "url": "https://github.com/ros2/common_interfaces.git",
+      "humble_release": "4.9.2-1"
+    },
+    "admittance_controller": {
+      "repository": "ros2_controllers",
+      "url": "https://github.com/ros-controls/ros2_controllers.git",
+      "humble_release": "2.54.1-1"
+    },
+    "ament_clang_format": {
+      "repository": "ament_lint",
+      "url": "https://github.com/ament/ament_lint.git",
+      "humble_release": "0.12.15-1"
+    },
+    "ament_clang_tidy": {
+      "repository": "ament_lint",
+      "url": "https://github.com/ament/ament_lint.git",
+      "humble_release": "0.12.15-1"
+    },
+    "ament_cmake": {
+      "repository": "ament_cmake",
+      "url": "https://github.com/ament/ament_cmake.git",
+      "humble_release": "1.3.15-1"
+    },
+    "ament_cmake_auto": {
+      "repository": "ament_cmake",
+      "url": "https://github.com/ament/ament_cmake.git",
+      "humble_release": "1.3.15-1"
+    },
+    "ament_cmake_clang_format": {
+      "repository": "ament_lint",
+      "url": "https://github.com/ament/ament_lint.git",
+      "humble_release": "0.12.15-1"
+    },
+    "ament_cmake_clang_tidy": {
+      "repository": "ament_lint",
+      "url": "https://github.com/ament/ament_lint.git",
+      "humble_release": "0.12.15-1"
+    },
+    "ament_cmake_copyright": {
+      "repository": "ament_lint",
+      "url": "https://github.com/ament/ament_lint.git",
+      "humble_release": "0.12.15-1"
+    },
+    "ament_cmake_core": {
+      "repository": "ament_cmake",
+      "url": "https://github.com/ament/ament_cmake.git",
+      "humble_release": "1.3.15-1"
+    },
+    "ament_cmake_cppcheck": {
+      "repository": "ament_lint",
+      "url": "https://github.com/ament/ament_lint.git",
+      "humble_release": "0.12.15-1"
+    },
+    "ament_cmake_cpplint": {
+      "repository": "ament_lint",
+      "url": "https://github.com/ament/ament_lint.git",
+      "humble_release": "0.12.15-1"
+    },
+    "ament_cmake_export_definitions": {
+      "repository": "ament_cmake",
+      "url": "https://github.com/ament/ament_cmake.git",
+      "humble_release": "1.3.15-1"
+    },
+    "ament_cmake_export_dependencies": {
+      "repository": "ament_cmake",
+      "url": "https://github.com/ament/ament_cmake.git",
+      "humble_release": "1.3.15-1"
+    },
+    "ament_cmake_export_include_directories": {
+      "repository": "ament_cmake",
+      "url": "https://github.com/ament/ament_cmake.git",
+      "humble_release": "1.3.15-1"
+    },
+    "ament_cmake_export_interfaces": {
+      "repository": "ament_cmake",
+      "url": "https://github.com/ament/ament_cmake.git",
+      "humble_release": "1.3.15-1"
+    },
+    "ament_cmake_export_libraries": {
+      "repository": "ament_cmake",
+      "url": "https://github.com/ament/ament_cmake.git",
+      "humble_release": "1.3.15-1"
+    },
+    "ament_cmake_export_link_flags": {
+      "repository": "ament_cmake",
+      "url": "https://github.com/ament/ament_cmake.git",
+      "humble_release": "1.3.15-1"
+    },
+    "ament_cmake_export_targets": {
+      "repository": "ament_cmake",
+      "url": "https://github.com/ament/ament_cmake.git",
+      "humble_release": "1.3.15-1"
+    },
+    "ament_cmake_flake8": {
+      "repository": "ament_lint",
+      "url": "https://github.com/ament/ament_lint.git",
+      "humble_release": "0.12.15-1"
+    },
+    "ament_cmake_gen_version_h": {
+      "repository": "ament_cmake",
+      "url": "https://github.com/ament/ament_cmake.git",
+      "humble_release": "1.3.15-1"
+    },
+    "ament_cmake_gmock": {
+      "repository": "ament_cmake",
+      "url": "https://github.com/ament/ament_cmake.git",
+      "humble_release": "1.3.15-1"
+    },
+    "ament_cmake_google_benchmark": {
+      "repository": "ament_cmake",
+      "url": "https://github.com/ament/ament_cmake.git",
+      "humble_release": "1.3.15-1"
+    },
+    "ament_cmake_gtest": {
+      "repository": "ament_cmake",
+      "url": "https://github.com/ament/ament_cmake.git",
+      "humble_release": "1.3.15-1"
+    },
+    "ament_cmake_include_directories": {
+      "repository": "ament_cmake",
+      "url": "https://github.com/ament/ament_cmake.git",
+      "humble_release": "1.3.15-1"
+    },
+    "ament_cmake_libraries": {
+      "repository": "ament_cmake",
+      "url": "https://github.com/ament/ament_cmake.git",
+      "humble_release": "1.3.15-1"
+    },
+    "ament_cmake_lint_cmake": {
+      "repository": "ament_lint",
+      "url": "https://github.com/ament/ament_lint.git",
+      "humble_release": "0.12.15-1"
+    },
+    "ament_cmake_mypy": {
+      "repository": "ament_lint",
+      "url": "https://github.com/ament/ament_lint.git",
+      "humble_release": "0.12.15-1"
+    },
+    "ament_cmake_nose": {
+      "repository": "ament_cmake",
+      "url": "https://github.com/ament/ament_cmake.git",
+      "humble_release": "1.3.15-1"
+    },
+    "ament_cmake_pclint": {
+      "repository": "ament_lint",
+      "url": "https://github.com/ament/ament_lint.git",
+      "humble_release": "0.12.15-1"
+    },
+    "ament_cmake_pep257": {
+      "repository": "ament_lint",
+      "url": "https://github.com/ament/ament_lint.git",
+      "humble_release": "0.12.15-1"
+    },
+    "ament_cmake_pycodestyle": {
+      "repository": "ament_lint",
+      "url": "https://github.com/ament/ament_lint.git",
+      "humble_release": "0.12.15-1"
+    },
+    "ament_cmake_pyflakes": {
+      "repository": "ament_lint",
+      "url": "https://github.com/ament/ament_lint.git",
+      "humble_release": "0.12.15-1"
+    },
+    "ament_cmake_pytest": {
+      "repository": "ament_cmake",
+      "url": "https://github.com/ament/ament_cmake.git",
+      "humble_release": "1.3.15-1"
+    },
+    "ament_cmake_python": {
+      "repository": "ament_cmake",
+      "url": "https://github.com/ament/ament_cmake.git",
+      "humble_release": "1.3.15-1"
+    },
+    "ament_cmake_ros": {
+      "repository": "ament_cmake_ros",
+      "url": "https://github.com/ros2/ament_cmake_ros.git",
+      "humble_release": "0.10.1-1"
+    },
+    "ament_cmake_target_dependencies": {
+      "repository": "ament_cmake",
+      "url": "https://github.com/ament/ament_cmake.git",
+      "humble_release": "1.3.15-1"
+    },
+    "ament_cmake_test": {
+      "repository": "ament_cmake",
+      "url": "https://github.com/ament/ament_cmake.git",
+      "humble_release": "1.3.15-1"
+    },
+    "ament_cmake_uncrustify": {
+      "repository": "ament_lint",
+      "url": "https://github.com/ament/ament_lint.git",
+      "humble_release": "0.12.15-1"
+    },
+    "ament_cmake_vendor_package": {
+      "repository": "ament_cmake",
+      "url": "https://github.com/ament/ament_cmake.git",
+      "humble_release": "1.3.15-1"
+    },
+    "ament_cmake_version": {
+      "repository": "ament_cmake",
+      "url": "https://github.com/ament/ament_cmake.git",
+      "humble_release": "1.3.15-1"
+    },
+    "ament_cmake_xmllint": {
+      "repository": "ament_lint",
+      "url": "https://github.com/ament/ament_lint.git",
+      "humble_release": "0.12.15-1"
+    },
+    "ament_copyright": {
+      "repository": "ament_lint",
+      "url": "https://github.com/ament/ament_lint.git",
+      "humble_release": "0.12.15-1"
+    },
+    "ament_cppcheck": {
+      "repository": "ament_lint",
+      "url": "https://github.com/ament/ament_lint.git",
+      "humble_release": "0.12.15-1"
+    },
+    "ament_cpplint": {
+      "repository": "ament_lint",
+      "url": "https://github.com/ament/ament_lint.git",
+      "humble_release": "0.12.15-1"
+    },
+    "ament_flake8": {
+      "repository": "ament_lint",
+      "url": "https://github.com/ament/ament_lint.git",
+      "humble_release": "0.12.15-1"
+    },
+    "ament_index_cpp": {
+      "repository": "ament_index",
+      "url": "https://github.com/ament/ament_index.git",
+      "humble_release": "1.4.1-1"
+    },
+    "ament_index_python": {
+      "repository": "ament_index",
+      "url": "https://github.com/ament/ament_index.git",
+      "humble_release": "1.4.1-1"
+    },
+    "ament_lint": {
+      "repository": "ament_lint",
+      "url": "https://github.com/ament/ament_lint.git",
+      "humble_release": "0.12.15-1"
+    },
+    "ament_lint_auto": {
+      "repository": "ament_lint",
+      "url": "https://github.com/ament/ament_lint.git",
+      "humble_release": "0.12.15-1"
+    },
+    "ament_lint_cmake": {
+      "repository": "ament_lint",
+      "url": "https://github.com/ament/ament_lint.git",
+      "humble_release": "0.12.15-1"
+    },
+    "ament_lint_common": {
+      "repository": "ament_lint",
+      "url": "https://github.com/ament/ament_lint.git",
+      "humble_release": "0.12.15-1"
+    },
+    "ament_mypy": {
+      "repository": "ament_lint",
+      "url": "https://github.com/ament/ament_lint.git",
+      "humble_release": "0.12.15-1"
+    },
+    "ament_package": {
+      "repository": "ament_package",
+      "url": "https://github.com/ament/ament_package.git",
+      "humble_release": "0.14.2-1"
+    },
+    "ament_pclint": {
+      "repository": "ament_lint",
+      "url": "https://github.com/ament/ament_lint.git",
+      "humble_release": "0.12.15-1"
+    },
+    "ament_pep257": {
+      "repository": "ament_lint",
+      "url": "https://github.com/ament/ament_lint.git",
+      "humble_release": "0.12.15-1"
+    },
+    "ament_pycodestyle": {
+      "repository": "ament_lint",
+      "url": "https://github.com/ament/ament_lint.git",
+      "humble_release": "0.12.15-1"
+    },
+    "ament_pyflakes": {
+      "repository": "ament_lint",
+      "url": "https://github.com/ament/ament_lint.git",
+      "humble_release": "0.12.15-1"
+    },
+    "ament_uncrustify": {
+      "repository": "ament_lint",
+      "url": "https://github.com/ament/ament_lint.git",
+      "humble_release": "0.12.15-1"
+    },
+    "ament_xmllint": {
+      "repository": "ament_lint",
+      "url": "https://github.com/ament/ament_lint.git",
+      "humble_release": "0.12.15-1"
+    },
+    "angles": {
+      "repository": "angles",
+      "url": "https://github.com/ros/angles.git",
+      "humble_release": "1.15.0-1"
+    },
+    "bicycle_steering_controller": {
+      "repository": "ros2_controllers",
+      "url": "https://github.com/ros-controls/ros2_controllers.git",
+      "humble_release": "2.54.1-1"
+    },
+    "builtin_interfaces": {
+      "repository": "rcl_interfaces",
+      "url": "https://github.com/ros2/rcl_interfaces.git",
+      "humble_release": "1.2.3-1"
+    },
+    "camera_calibration_parsers": {
+      "repository": "image_common",
+      "url": "https://github.com/ros-perception/image_common.git",
+      "humble_release": "3.1.13-1"
+    },
+    "camera_info_manager": {
+      "repository": "image_common",
+      "url": "https://github.com/ros-perception/image_common.git",
+      "humble_release": "3.1.13-1"
+    },
+    "camera_info_manager_py": {
+      "repository": "image_common",
+      "url": "https://github.com/ros-perception/image_common.git",
+      "humble_release": "3.1.13-1"
+    },
+    "class_loader": {
+      "repository": "class_loader",
+      "url": "https://github.com/ros/class_loader.git",
+      "humble_release": "2.2.0-3"
+    },
+    "common_interfaces": {
+      "repository": "common_interfaces",
+      "url": "https://github.com/ros2/common_interfaces.git",
+      "humble_release": "4.9.2-1"
+    },
+    "composition": {
+      "repository": "demos",
+      "url": "https://github.com/ros2/demos.git",
+      "humble_release": "0.20.10-1"
+    },
+    "composition_interfaces": {
+      "repository": "rcl_interfaces",
+      "url": "https://github.com/ros2/rcl_interfaces.git",
+      "humble_release": "1.2.3-1"
+    },
+    "console_bridge_vendor": {
+      "repository": "console_bridge_vendor",
+      "url": "https://github.com/ros2/console_bridge_vendor.git",
+      "humble_release": "1.4.1-1"
+    },
+    "control_msgs": {
+      "repository": "control_msgs",
+      "url": "https://github.com/ros-controls/control_msgs.git",
+      "humble_release": "4.9.0-1"
+    },
+    "control_toolbox": {
+      "repository": "control_toolbox",
+      "url": "https://github.com/ros-controls/control_toolbox.git",
+      "humble_release": "3.7.1-1"
+    },
+    "controller_interface": {
+      "repository": "ros2_control",
+      "url": "https://github.com/ros-controls/ros2_control.git",
+      "humble_release": "2.54.4-1"
+    },
+    "controller_manager": {
+      "repository": "ros2_control",
+      "url": "https://github.com/ros-controls/ros2_control.git",
+      "humble_release": "2.54.4-1"
+    },
+    "controller_manager_msgs": {
+      "repository": "ros2_control",
+      "url": "https://github.com/ros-controls/ros2_control.git",
+      "humble_release": "2.54.4-1"
+    },
+    "demo_nodes_cpp": {
+      "repository": "demos",
+      "url": "https://github.com/ros2/demos.git",
+      "humble_release": "0.20.10-1"
+    },
+    "demo_nodes_cpp_native": {
+      "repository": "demos",
+      "url": "https://github.com/ros2/demos.git",
+      "humble_release": "0.20.10-1"
+    },
+    "demo_nodes_py": {
+      "repository": "demos",
+      "url": "https://github.com/ros2/demos.git",
+      "humble_release": "0.20.10-1"
+    },
+    "diagnostic_aggregator": {
+      "repository": "diagnostics",
+      "url": "https://github.com/ros/diagnostics.git",
+      "humble_release": "4.0.7-1"
+    },
+    "diagnostic_common_diagnostics": {
+      "repository": "diagnostics",
+      "url": "https://github.com/ros/diagnostics.git",
+      "humble_release": "4.0.7-1"
+    },
+    "diagnostic_msgs": {
+      "repository": "common_interfaces",
+      "url": "https://github.com/ros2/common_interfaces.git",
+      "humble_release": "4.9.2-1"
+    },
+    "diagnostic_remote_logging": {
+      "repository": "diagnostics",
+      "url": "https://github.com/ros/diagnostics.git",
+      "humble_release": "4.0.7-1"
+    },
+    "diagnostic_updater": {
+      "repository": "diagnostics",
+      "url": "https://github.com/ros/diagnostics.git",
+      "humble_release": "4.0.7-1"
+    },
+    "diagnostics": {
+      "repository": "diagnostics",
+      "url": "https://github.com/ros/diagnostics.git",
+      "humble_release": "4.0.7-1"
+    },
+    "diff_drive_controller": {
+      "repository": "ros2_controllers",
+      "url": "https://github.com/ros-controls/ros2_controllers.git",
+      "humble_release": "2.54.1-1"
+    },
+    "domain_coordinator": {
+      "repository": "ament_cmake_ros",
+      "url": "https://github.com/ros2/ament_cmake_ros.git",
+      "humble_release": "0.10.1-1"
+    },
+    "dummy_map_server": {
+      "repository": "demos",
+      "url": "https://github.com/ros2/demos.git",
+      "humble_release": "0.20.10-1"
+    },
+    "dummy_robot_bringup": {
+      "repository": "demos",
+      "url": "https://github.com/ros2/demos.git",
+      "humble_release": "0.20.10-1"
+    },
+    "dummy_sensors": {
+      "repository": "demos",
+      "url": "https://github.com/ros2/demos.git",
+      "humble_release": "0.20.10-1"
+    },
+    "effort_controllers": {
+      "repository": "ros2_controllers",
+      "url": "https://github.com/ros-controls/ros2_controllers.git",
+      "humble_release": "2.54.1-1"
+    },
+    "eigen3_cmake_module": {
+      "repository": "eigen3_cmake_module",
+      "url": "https://github.com/ros2/eigen3_cmake_module.git",
+      "humble_release": "0.1.1-4"
+    },
+    "example_interfaces": {
+      "repository": "example_interfaces",
+      "url": "https://github.com/ros2/example_interfaces.git",
+      "humble_release": "0.9.3-2"
+    },
+    "examples_rclcpp_async_client": {
+      "repository": "examples",
+      "url": "https://github.com/ros2/examples.git",
+      "humble_release": "0.15.5-1"
+    },
+    "examples_rclcpp_cbg_executor": {
+      "repository": "examples",
+      "url": "https://github.com/ros2/examples.git",
+      "humble_release": "0.15.5-1"
+    },
+    "examples_rclcpp_minimal_action_client": {
+      "repository": "examples",
+      "url": "https://github.com/ros2/examples.git",
+      "humble_release": "0.15.5-1"
+    },
+    "examples_rclcpp_minimal_action_server": {
+      "repository": "examples",
+      "url": "https://github.com/ros2/examples.git",
+      "humble_release": "0.15.5-1"
+    },
+    "examples_rclcpp_minimal_client": {
+      "repository": "examples",
+      "url": "https://github.com/ros2/examples.git",
+      "humble_release": "0.15.5-1"
+    },
+    "examples_rclcpp_minimal_composition": {
+      "repository": "examples",
+      "url": "https://github.com/ros2/examples.git",
+      "humble_release": "0.15.5-1"
+    },
+    "examples_rclcpp_minimal_publisher": {
+      "repository": "examples",
+      "url": "https://github.com/ros2/examples.git",
+      "humble_release": "0.15.5-1"
+    },
+    "examples_rclcpp_minimal_service": {
+      "repository": "examples",
+      "url": "https://github.com/ros2/examples.git",
+      "humble_release": "0.15.5-1"
+    },
+    "examples_rclcpp_minimal_subscriber": {
+      "repository": "examples",
+      "url": "https://github.com/ros2/examples.git",
+      "humble_release": "0.15.5-1"
+    },
+    "examples_rclcpp_minimal_timer": {
+      "repository": "examples",
+      "url": "https://github.com/ros2/examples.git",
+      "humble_release": "0.15.5-1"
+    },
+    "examples_rclcpp_multithreaded_executor": {
+      "repository": "examples",
+      "url": "https://github.com/ros2/examples.git",
+      "humble_release": "0.15.5-1"
+    },
+    "examples_rclcpp_wait_set": {
+      "repository": "examples",
+      "url": "https://github.com/ros2/examples.git",
+      "humble_release": "0.15.5-1"
+    },
+    "examples_rclpy_executors": {
+      "repository": "examples",
+      "url": "https://github.com/ros2/examples.git",
+      "humble_release": "0.15.5-1"
+    },
+    "examples_rclpy_guard_conditions": {
+      "repository": "examples",
+      "url": "https://github.com/ros2/examples.git",
+      "humble_release": "0.15.5-1"
+    },
+    "examples_rclpy_minimal_action_client": {
+      "repository": "examples",
+      "url": "https://github.com/ros2/examples.git",
+      "humble_release": "0.15.5-1"
+    },
+    "examples_rclpy_minimal_action_server": {
+      "repository": "examples",
+      "url": "https://github.com/ros2/examples.git",
+      "humble_release": "0.15.5-1"
+    },
+    "examples_rclpy_minimal_client": {
+      "repository": "examples",
+      "url": "https://github.com/ros2/examples.git",
+      "humble_release": "0.15.5-1"
+    },
+    "examples_rclpy_minimal_publisher": {
+      "repository": "examples",
+      "url": "https://github.com/ros2/examples.git",
+      "humble_release": "0.15.5-1"
+    },
+    "examples_rclpy_minimal_service": {
+      "repository": "examples",
+      "url": "https://github.com/ros2/examples.git",
+      "humble_release": "0.15.5-1"
+    },
+    "examples_rclpy_minimal_subscriber": {
+      "repository": "examples",
+      "url": "https://github.com/ros2/examples.git",
+      "humble_release": "0.15.5-1"
+    },
+    "examples_rclpy_pointcloud_publisher": {
+      "repository": "examples",
+      "url": "https://github.com/ros2/examples.git",
+      "humble_release": "0.15.5-1"
+    },
+    "examples_tf2_py": {
+      "repository": "geometry2",
+      "url": "https://github.com/ros2/geometry2.git",
+      "humble_release": "0.25.24-1"
+    },
+    "fastrtps_cmake_module": {
+      "repository": "rosidl_typesupport_fastrtps",
+      "url": "https://github.com/ros2/rosidl_typesupport_fastrtps.git",
+      "humble_release": "2.2.4-1"
+    },
+    "filters": {
+      "repository": "filters",
+      "url": "https://github.com/ros/filters.git",
+      "humble_release": "2.2.2-1"
+    },
+    "force_torque_sensor_broadcaster": {
+      "repository": "ros2_controllers",
+      "url": "https://github.com/ros-controls/ros2_controllers.git",
+      "humble_release": "2.54.1-1"
+    },
+    "forward_command_controller": {
+      "repository": "ros2_controllers",
+      "url": "https://github.com/ros-controls/ros2_controllers.git",
+      "humble_release": "2.54.1-1"
+    },
+    "gazebo_dev": {
+      "repository": "gazebo_ros_pkgs",
+      "url": "https://github.com/ros-simulation/gazebo_ros_pkgs.git",
+      "humble_release": "3.9.0-1"
+    },
+    "gazebo_msgs": {
+      "repository": "gazebo_ros_pkgs",
+      "url": "https://github.com/ros-simulation/gazebo_ros_pkgs.git",
+      "humble_release": "3.9.0-1"
+    },
+    "gazebo_plugins": {
+      "repository": "gazebo_ros_pkgs",
+      "url": "https://github.com/ros-simulation/gazebo_ros_pkgs.git",
+      "humble_release": "3.9.0-1"
+    },
+    "gazebo_ros": {
+      "repository": "gazebo_ros_pkgs",
+      "url": "https://github.com/ros-simulation/gazebo_ros_pkgs.git",
+      "humble_release": "3.9.0-1"
+    },
+    "gazebo_ros2_control": {
+      "repository": "gazebo_ros2_control",
+      "url": "https://github.com/ros-simulation/gazebo_ros2_control.git",
+      "humble_release": "0.4.10-1"
+    },
+    "generate_parameter_library": {
+      "repository": "generate_parameter_library",
+      "url": "https://github.com/ros-tooling/generate_parameter_library.git",
+      "humble_release": "0.7.7-1"
+    },
+    "generate_parameter_library_py": {
+      "repository": "generate_parameter_library",
+      "url": "https://github.com/ros-tooling/generate_parameter_library.git",
+      "humble_release": "0.7.7-1"
+    },
+    "geometry2": {
+      "repository": "geometry2",
+      "url": "https://github.com/ros2/geometry2.git",
+      "humble_release": "0.25.24-1"
+    },
+    "geometry_msgs": {
+      "repository": "common_interfaces",
+      "url": "https://github.com/ros2/common_interfaces.git",
+      "humble_release": "4.9.2-1"
+    },
+    "gpio_controllers": {
+      "repository": "ros2_controllers",
+      "url": "https://github.com/ros-controls/ros2_controllers.git",
+      "humble_release": "2.54.1-1"
+    },
+    "gripper_controllers": {
+      "repository": "ros2_controllers",
+      "url": "https://github.com/ros-controls/ros2_controllers.git",
+      "humble_release": "2.54.1-1"
+    },
+    "hardware_interface": {
+      "repository": "ros2_control",
+      "url": "https://github.com/ros-controls/ros2_control.git",
+      "humble_release": "2.54.4-1"
+    },
+    "hardware_interface_testing": {
+      "repository": "ros2_control",
+      "url": "https://github.com/ros-controls/ros2_control.git",
+      "humble_release": "2.54.4-1"
+    },
+    "image_common": {
+      "repository": "image_common",
+      "url": "https://github.com/ros-perception/image_common.git",
+      "humble_release": "3.1.13-1"
+    },
+    "image_tools": {
+      "repository": "demos",
+      "url": "https://github.com/ros2/demos.git",
+      "humble_release": "0.20.10-1"
+    },
+    "image_transport": {
+      "repository": "image_common",
+      "url": "https://github.com/ros-perception/image_common.git",
+      "humble_release": "3.1.13-1"
+    },
+    "imu_sensor_broadcaster": {
+      "repository": "ros2_controllers",
+      "url": "https://github.com/ros-controls/ros2_controllers.git",
+      "humble_release": "2.54.1-1"
+    },
+    "interactive_markers": {
+      "repository": "interactive_markers",
+      "url": "https://github.com/ros-visualization/interactive_markers.git",
+      "humble_release": "2.3.2-2"
+    },
+    "intra_process_demo": {
+      "repository": "demos",
+      "url": "https://github.com/ros2/demos.git",
+      "humble_release": "0.20.10-1"
+    },
+    "joint_limits": {
+      "repository": "ros2_control",
+      "url": "https://github.com/ros-controls/ros2_control.git",
+      "humble_release": "2.54.4-1"
+    },
+    "joint_state_broadcaster": {
+      "repository": "ros2_controllers",
+      "url": "https://github.com/ros-controls/ros2_controllers.git",
+      "humble_release": "2.54.1-1"
+    },
+    "joint_state_publisher": {
+      "repository": "joint_state_publisher",
+      "url": "https://github.com/ros/joint_state_publisher.git",
+      "humble_release": "2.4.0-1"
+    },
+    "joint_state_publisher_gui": {
+      "repository": "joint_state_publisher",
+      "url": "https://github.com/ros/joint_state_publisher.git",
+      "humble_release": "2.4.0-1"
+    },
+    "joint_trajectory_controller": {
+      "repository": "ros2_controllers",
+      "url": "https://github.com/ros-controls/ros2_controllers.git",
+      "humble_release": "2.54.1-1"
+    },
+    "joy": {
+      "repository": "joystick_drivers",
+      "url": "https://github.com/ros-drivers/joystick_drivers.git",
+      "humble_release": "3.3.0-1"
+    },
+    "joy_linux": {
+      "repository": "joystick_drivers",
+      "url": "https://github.com/ros-drivers/joystick_drivers.git",
+      "humble_release": "3.3.0-1"
+    },
+    "joy_teleop": {
+      "repository": "teleop_tools",
+      "url": "https://github.com/ros-teleop/teleop_tools.git",
+      "humble_release": "1.7.0-1"
+    },
+    "kdl_parser": {
+      "repository": "kdl_parser",
+      "url": "https://github.com/ros/kdl_parser.git",
+      "humble_release": "2.6.4-1"
+    },
+    "key_teleop": {
+      "repository": "teleop_tools",
+      "url": "https://github.com/ros-teleop/teleop_tools.git",
+      "humble_release": "1.7.0-1"
+    },
+    "keyboard_handler": {
+      "repository": "keyboard_handler",
+      "url": "https://github.com/ros-tooling/keyboard_handler.git",
+      "humble_release": "0.0.5-1"
+    },
+    "kinematics_interface": {
+      "repository": "kinematics_interface",
+      "url": "https://github.com/ros-controls/kinematics_interface.git",
+      "humble_release": "0.4.3-1"
+    },
+    "kinematics_interface_kdl": {
+      "repository": "kinematics_interface",
+      "url": "https://github.com/ros-controls/kinematics_interface.git",
+      "humble_release": "0.4.3-1"
+    },
+    "laser_geometry": {
+      "repository": "laser_geometry",
+      "url": "https://github.com/ros-perception/laser_geometry.git",
+      "humble_release": "2.4.1-1"
+    },
+    "launch": {
+      "repository": "launch",
+      "url": "https://github.com/ros2/launch.git",
+      "humble_release": "1.0.16-1"
+    },
+    "launch_pytest": {
+      "repository": "launch",
+      "url": "https://github.com/ros2/launch.git",
+      "humble_release": "1.0.16-1"
+    },
+    "launch_ros": {
+      "repository": "launch_ros",
+      "url": "https://github.com/ros2/launch_ros.git",
+      "humble_release": "0.19.14-1"
+    },
+    "launch_testing": {
+      "repository": "launch",
+      "url": "https://github.com/ros2/launch.git",
+      "humble_release": "1.0.16-1"
+    },
+    "launch_testing_ament_cmake": {
+      "repository": "launch",
+      "url": "https://github.com/ros2/launch.git",
+      "humble_release": "1.0.16-1"
+    },
+    "launch_testing_examples": {
+      "repository": "examples",
+      "url": "https://github.com/ros2/examples.git",
+      "humble_release": "0.15.5-1"
+    },
+    "launch_testing_ros": {
+      "repository": "launch_ros",
+      "url": "https://github.com/ros2/launch_ros.git",
+      "humble_release": "0.19.14-1"
+    },
+    "launch_xml": {
+      "repository": "launch",
+      "url": "https://github.com/ros2/launch.git",
+      "humble_release": "1.0.16-1"
+    },
+    "launch_yaml": {
+      "repository": "launch",
+      "url": "https://github.com/ros2/launch.git",
+      "humble_release": "1.0.16-1"
+    },
+    "libcurl_vendor": {
+      "repository": "resource_retriever",
+      "url": "https://github.com/ros/resource_retriever.git",
+      "humble_release": "3.1.3-1"
+    },
+    "libstatistics_collector": {
+      "repository": "libstatistics_collector",
+      "url": "https://github.com/ros-tooling/libstatistics_collector.git",
+      "humble_release": "1.3.4-1"
+    },
+    "libyaml_vendor": {
+      "repository": "libyaml_vendor",
+      "url": "https://github.com/ros2/libyaml_vendor.git",
+      "humble_release": "1.2.2-2"
+    },
+    "lifecycle": {
+      "repository": "demos",
+      "url": "https://github.com/ros2/demos.git",
+      "humble_release": "0.20.10-1"
+    },
+    "lifecycle_msgs": {
+      "repository": "rcl_interfaces",
+      "url": "https://github.com/ros2/rcl_interfaces.git",
+      "humble_release": "1.2.3-1"
+    },
+    "lifecycle_py": {
+      "repository": "demos",
+      "url": "https://github.com/ros2/demos.git",
+      "humble_release": "0.20.10-1"
+    },
+    "logging_demo": {
+      "repository": "demos",
+      "url": "https://github.com/ros2/demos.git",
+      "humble_release": "0.20.10-1"
+    },
+    "map_msgs": {
+      "repository": "navigation_msgs",
+      "url": "https://github.com/ros-planning/navigation_msgs.git",
+      "humble_release": "2.1.0-3"
+    },
+    "mcap_vendor": {
+      "repository": "rosbag2",
+      "url": "https://github.com/ros2/rosbag2.git",
+      "humble_release": "0.15.17-1"
+    },
+    "mecanum_drive_controller": {
+      "repository": "ros2_controllers",
+      "url": "https://github.com/ros-controls/ros2_controllers.git",
+      "humble_release": "2.54.1-1"
+    },
+    "message_filters": {
+      "repository": "message_filters",
+      "url": "https://github.com/ros2/message_filters.git",
+      "humble_release": "4.3.20-1"
+    },
+    "mimick_vendor": {
+      "repository": "mimick_vendor",
+      "url": "https://github.com/ros2/mimick_vendor.git",
+      "humble_release": "0.2.8-2"
+    },
+    "mouse_teleop": {
+      "repository": "teleop_tools",
+      "url": "https://github.com/ros-teleop/teleop_tools.git",
+      "humble_release": "1.7.0-1"
+    },
+    "nav_msgs": {
+      "repository": "common_interfaces",
+      "url": "https://github.com/ros2/common_interfaces.git",
+      "humble_release": "4.9.2-1"
+    },
+    "orocos_kdl_vendor": {
+      "repository": "orocos_kdl_vendor",
+      "url": "https://github.com/ros2/orocos_kdl_vendor.git",
+      "humble_release": "0.2.5-1"
+    },
+    "osrf_pycommon": {
+      "repository": "osrf_pycommon",
+      "url": "https://github.com/osrf/osrf_pycommon.git",
+      "humble_release": "2.1.6-1"
+    },
+    "parameter_traits": {
+      "repository": "generate_parameter_library",
+      "url": "https://github.com/ros-tooling/generate_parameter_library.git",
+      "humble_release": "0.7.7-1"
+    },
+    "pendulum_control": {
+      "repository": "demos",
+      "url": "https://github.com/ros2/demos.git",
+      "humble_release": "0.20.10-1"
+    },
+    "pendulum_msgs": {
+      "repository": "demos",
+      "url": "https://github.com/ros2/demos.git",
+      "humble_release": "0.20.10-1"
+    },
+    "performance_test_fixture": {
+      "repository": "performance_test_fixture",
+      "url": "https://github.com/ros2/performance_test_fixture.git",
+      "humble_release": "0.0.9-1"
+    },
+    "pid_controller": {
+      "repository": "ros2_controllers",
+      "url": "https://github.com/ros-controls/ros2_controllers.git",
+      "humble_release": "2.54.1-1"
+    },
+    "pluginlib": {
+      "repository": "pluginlib",
+      "url": "https://github.com/ros/pluginlib.git",
+      "humble_release": "5.1.5-1"
+    },
+    "pose_broadcaster": {
+      "repository": "ros2_controllers",
+      "url": "https://github.com/ros-controls/ros2_controllers.git",
+      "humble_release": "2.54.1-1"
+    },
+    "position_controllers": {
+      "repository": "ros2_controllers",
+      "url": "https://github.com/ros-controls/ros2_controllers.git",
+      "humble_release": "2.54.1-1"
+    },
+    "pybind11_vendor": {
+      "repository": "pybind11_vendor",
+      "url": "https://github.com/ros2/pybind11_vendor.git",
+      "humble_release": "2.4.2-1"
+    },
+    "python_cmake_module": {
+      "repository": "python_cmake_module",
+      "url": "https://github.com/ros2/python_cmake_module.git",
+      "humble_release": "0.10.0-2"
+    },
+    "python_orocos_kdl_vendor": {
+      "repository": "orocos_kdl_vendor",
+      "url": "https://github.com/ros2/orocos_kdl_vendor.git",
+      "humble_release": "0.2.5-1"
+    },
+    "python_qt_binding": {
+      "repository": "python_qt_binding",
+      "url": "https://github.com/ros-visualization/python_qt_binding.git",
+      "humble_release": "1.1.3-1"
+    },
+    "qt_dotgraph": {
+      "repository": "qt_gui_core",
+      "url": "https://github.com/ros-visualization/qt_gui_core.git",
+      "humble_release": "2.2.5-1"
+    },
+    "qt_gui": {
+      "repository": "qt_gui_core",
+      "url": "https://github.com/ros-visualization/qt_gui_core.git",
+      "humble_release": "2.2.5-1"
+    },
+    "qt_gui_app": {
+      "repository": "qt_gui_core",
+      "url": "https://github.com/ros-visualization/qt_gui_core.git",
+      "humble_release": "2.2.5-1"
+    },
+    "qt_gui_core": {
+      "repository": "qt_gui_core",
+      "url": "https://github.com/ros-visualization/qt_gui_core.git",
+      "humble_release": "2.2.5-1"
+    },
+    "qt_gui_cpp": {
+      "repository": "qt_gui_core",
+      "url": "https://github.com/ros-visualization/qt_gui_core.git",
+      "humble_release": "2.2.5-1"
+    },
+    "qt_gui_py_common": {
+      "repository": "qt_gui_core",
+      "url": "https://github.com/ros-visualization/qt_gui_core.git",
+      "humble_release": "2.2.5-1"
+    },
+    "quality_of_service_demo_cpp": {
+      "repository": "demos",
+      "url": "https://github.com/ros2/demos.git",
+      "humble_release": "0.20.10-1"
+    },
+    "quality_of_service_demo_py": {
+      "repository": "demos",
+      "url": "https://github.com/ros2/demos.git",
+      "humble_release": "0.20.10-1"
+    },
+    "range_sensor_broadcaster": {
+      "repository": "ros2_controllers",
+      "url": "https://github.com/ros-controls/ros2_controllers.git",
+      "humble_release": "2.54.1-1"
+    },
+    "rcl": {
+      "repository": "rcl",
+      "url": "https://github.com/ros2/rcl.git",
+      "humble_release": "5.3.13-1"
+    },
+    "rcl_action": {
+      "repository": "rcl",
+      "url": "https://github.com/ros2/rcl.git",
+      "humble_release": "5.3.13-1"
+    },
+    "rcl_interfaces": {
+      "repository": "rcl_interfaces",
+      "url": "https://github.com/ros2/rcl_interfaces.git",
+      "humble_release": "1.2.3-1"
+    },
+    "rcl_lifecycle": {
+      "repository": "rcl",
+      "url": "https://github.com/ros2/rcl.git",
+      "humble_release": "5.3.13-1"
+    },
+    "rcl_logging_interface": {
+      "repository": "rcl_logging",
+      "url": "https://github.com/ros2/rcl_logging.git",
+      "humble_release": "2.3.2-1"
+    },
+    "rcl_logging_noop": {
+      "repository": "rcl_logging",
+      "url": "https://github.com/ros2/rcl_logging.git",
+      "humble_release": "2.3.2-1"
+    },
+    "rcl_logging_spdlog": {
+      "repository": "rcl_logging",
+      "url": "https://github.com/ros2/rcl_logging.git",
+      "humble_release": "2.3.2-1"
+    },
+    "rcl_yaml_param_parser": {
+      "repository": "rcl",
+      "url": "https://github.com/ros2/rcl.git",
+      "humble_release": "5.3.13-1"
+    },
+    "rclcpp": {
+      "repository": "rclcpp",
+      "url": "https://github.com/ros2/rclcpp.git",
+      "humble_release": "16.0.23-1"
+    },
+    "rclcpp_action": {
+      "repository": "rclcpp",
+      "url": "https://github.com/ros2/rclcpp.git",
+      "humble_release": "16.0.23-1"
+    },
+    "rclcpp_components": {
+      "repository": "rclcpp",
+      "url": "https://github.com/ros2/rclcpp.git",
+      "humble_release": "16.0.23-1"
+    },
+    "rclcpp_lifecycle": {
+      "repository": "rclcpp",
+      "url": "https://github.com/ros2/rclcpp.git",
+      "humble_release": "16.0.23-1"
+    },
+    "rclpy": {
+      "repository": "rclpy",
+      "url": "https://github.com/ros2/rclpy.git",
+      "humble_release": "3.3.22-1"
+    },
+    "rcpputils": {
+      "repository": "rcpputils",
+      "url": "https://github.com/ros2/rcpputils.git",
+      "humble_release": "2.4.7-1"
+    },
+    "rcutils": {
+      "repository": "rcutils",
+      "url": "https://github.com/ros2/rcutils.git",
+      "humble_release": "5.1.11-1"
+    },
+    "realtime_tools": {
+      "repository": "realtime_tools",
+      "url": "https://github.com/ros-controls/realtime_tools.git",
+      "humble_release": "2.15.1-1"
+    },
+    "resource_retriever": {
+      "repository": "resource_retriever",
+      "url": "https://github.com/ros/resource_retriever.git",
+      "humble_release": "3.1.3-1"
+    },
+    "rmw": {
+      "repository": "rmw",
+      "url": "https://github.com/ros2/rmw.git",
+      "humble_release": "6.1.4-1"
+    },
+    "rmw_connextdds": {
+      "repository": "rmw_connextdds",
+      "url": "https://github.com/ros2/rmw_connextdds.git",
+      "humble_release": "0.11.6-1"
+    },
+    "rmw_connextdds_common": {
+      "repository": "rmw_connextdds",
+      "url": "https://github.com/ros2/rmw_connextdds.git",
+      "humble_release": "0.11.6-1"
+    },
+    "rmw_cyclonedds_cpp": {
+      "repository": "rmw_cyclonedds",
+      "url": "https://github.com/ros2/rmw_cyclonedds.git",
+      "humble_release": "1.3.6-1"
+    },
+    "rmw_dds_common": {
+      "repository": "rmw_dds_common",
+      "url": "https://github.com/ros2/rmw_dds_common.git",
+      "humble_release": "1.6.0-2"
+    },
+    "rmw_fastrtps_cpp": {
+      "repository": "rmw_fastrtps",
+      "url": "https://github.com/ros2/rmw_fastrtps.git",
+      "humble_release": "6.2.11-1"
+    },
+    "rmw_fastrtps_dynamic_cpp": {
+      "repository": "rmw_fastrtps",
+      "url": "https://github.com/ros2/rmw_fastrtps.git",
+      "humble_release": "6.2.11-1"
+    },
+    "rmw_fastrtps_shared_cpp": {
+      "repository": "rmw_fastrtps",
+      "url": "https://github.com/ros2/rmw_fastrtps.git",
+      "humble_release": "6.2.11-1"
+    },
+    "rmw_implementation": {
+      "repository": "rmw_implementation",
+      "url": "https://github.com/ros2/rmw_implementation.git",
+      "humble_release": "2.8.6-1"
+    },
+    "rmw_implementation_cmake": {
+      "repository": "rmw",
+      "url": "https://github.com/ros2/rmw.git",
+      "humble_release": "6.1.4-1"
+    },
+    "robot_state_publisher": {
+      "repository": "robot_state_publisher",
+      "url": "https://github.com/ros/robot_state_publisher.git",
+      "humble_release": "3.0.3-2"
+    },
+    "ros2_control": {
+      "repository": "ros2_control",
+      "url": "https://github.com/ros-controls/ros2_control.git",
+      "humble_release": "2.54.4-1"
+    },
+    "ros2_control_cmake": {
+      "repository": "ros2_control_cmake",
+      "url": "https://github.com/ros-controls/ros2_control_cmake.git",
+      "humble_release": "0.2.1-1"
+    },
+    "ros2_control_test_assets": {
+      "repository": "ros2_control",
+      "url": "https://github.com/ros-controls/ros2_control.git",
+      "humble_release": "2.54.4-1"
+    },
+    "ros2_controllers": {
+      "repository": "ros2_controllers",
+      "url": "https://github.com/ros-controls/ros2_controllers.git",
+      "humble_release": "2.54.1-1"
+    },
+    "ros2_controllers_test_nodes": {
+      "repository": "ros2_controllers",
+      "url": "https://github.com/ros-controls/ros2_controllers.git",
+      "humble_release": "2.54.1-1"
+    },
+    "ros2action": {
+      "repository": "ros2cli",
+      "url": "https://github.com/ros2/ros2cli.git",
+      "humble_release": "0.18.21-1"
+    },
+    "ros2bag": {
+      "repository": "rosbag2",
+      "url": "https://github.com/ros2/rosbag2.git",
+      "humble_release": "0.15.17-1"
+    },
+    "ros2cli": {
+      "repository": "ros2cli",
+      "url": "https://github.com/ros2/ros2cli.git",
+      "humble_release": "0.18.21-1"
+    },
+    "ros2cli_common_extensions": {
+      "repository": "ros2cli_common_extensions",
+      "url": "https://github.com/ros2/ros2cli_common_extensions.git",
+      "humble_release": "0.1.2-1"
+    },
+    "ros2cli_test_interfaces": {
+      "repository": "ros2cli",
+      "url": "https://github.com/ros2/ros2cli.git",
+      "humble_release": "0.18.21-1"
+    },
+    "ros2component": {
+      "repository": "ros2cli",
+      "url": "https://github.com/ros2/ros2cli.git",
+      "humble_release": "0.18.21-1"
+    },
+    "ros2controlcli": {
+      "repository": "ros2_control",
+      "url": "https://github.com/ros-controls/ros2_control.git",
+      "humble_release": "2.54.4-1"
+    },
+    "ros2doctor": {
+      "repository": "ros2cli",
+      "url": "https://github.com/ros2/ros2cli.git",
+      "humble_release": "0.18.21-1"
+    },
+    "ros2interface": {
+      "repository": "ros2cli",
+      "url": "https://github.com/ros2/ros2cli.git",
+      "humble_release": "0.18.21-1"
+    },
+    "ros2launch": {
+      "repository": "launch_ros",
+      "url": "https://github.com/ros2/launch_ros.git",
+      "humble_release": "0.19.14-1"
+    },
+    "ros2lifecycle": {
+      "repository": "ros2cli",
+      "url": "https://github.com/ros2/ros2cli.git",
+      "humble_release": "0.18.21-1"
+    },
+    "ros2lifecycle_test_fixtures": {
+      "repository": "ros2cli",
+      "url": "https://github.com/ros2/ros2cli.git",
+      "humble_release": "0.18.21-1"
+    },
+    "ros2multicast": {
+      "repository": "ros2cli",
+      "url": "https://github.com/ros2/ros2cli.git",
+      "humble_release": "0.18.21-1"
+    },
+    "ros2node": {
+      "repository": "ros2cli",
+      "url": "https://github.com/ros2/ros2cli.git",
+      "humble_release": "0.18.21-1"
+    },
+    "ros2param": {
+      "repository": "ros2cli",
+      "url": "https://github.com/ros2/ros2cli.git",
+      "humble_release": "0.18.21-1"
+    },
+    "ros2pkg": {
+      "repository": "ros2cli",
+      "url": "https://github.com/ros2/ros2cli.git",
+      "humble_release": "0.18.21-1"
+    },
+    "ros2plugin": {
+      "repository": "pluginlib",
+      "url": "https://github.com/ros/pluginlib.git",
+      "humble_release": "5.1.5-1"
+    },
+    "ros2run": {
+      "repository": "ros2cli",
+      "url": "https://github.com/ros2/ros2cli.git",
+      "humble_release": "0.18.21-1"
+    },
+    "ros2service": {
+      "repository": "ros2cli",
+      "url": "https://github.com/ros2/ros2cli.git",
+      "humble_release": "0.18.21-1"
+    },
+    "ros2test": {
+      "repository": "ros_testing",
+      "url": "https://github.com/ros2/ros_testing.git",
+      "humble_release": "0.4.0-3"
+    },
+    "ros2topic": {
+      "repository": "ros2cli",
+      "url": "https://github.com/ros2/ros2cli.git",
+      "humble_release": "0.18.21-1"
+    },
+    "ros2trace": {
+      "repository": "ros2_tracing",
+      "url": "https://github.com/ros2/ros2_tracing.git",
+      "humble_release": "4.1.2-1"
+    },
+    "ros_environment": {
+      "repository": "ros_environment",
+      "url": "https://github.com/ros/ros_environment.git",
+      "humble_release": "3.2.2-1"
+    },
+    "ros_testing": {
+      "repository": "ros_testing",
+      "url": "https://github.com/ros2/ros_testing.git",
+      "humble_release": "0.4.0-3"
+    },
+    "rosbag2": {
+      "repository": "rosbag2",
+      "url": "https://github.com/ros2/rosbag2.git",
+      "humble_release": "0.15.17-1"
+    },
+    "rosbag2_compression": {
+      "repository": "rosbag2",
+      "url": "https://github.com/ros2/rosbag2.git",
+      "humble_release": "0.15.17-1"
+    },
+    "rosbag2_compression_zstd": {
+      "repository": "rosbag2",
+      "url": "https://github.com/ros2/rosbag2.git",
+      "humble_release": "0.15.17-1"
+    },
+    "rosbag2_cpp": {
+      "repository": "rosbag2",
+      "url": "https://github.com/ros2/rosbag2.git",
+      "humble_release": "0.15.17-1"
+    },
+    "rosbag2_interfaces": {
+      "repository": "rosbag2",
+      "url": "https://github.com/ros2/rosbag2.git",
+      "humble_release": "0.15.17-1"
+    },
+    "rosbag2_performance_benchmarking": {
+      "repository": "rosbag2",
+      "url": "https://github.com/ros2/rosbag2.git",
+      "humble_release": "0.15.17-1"
+    },
+    "rosbag2_py": {
+      "repository": "rosbag2",
+      "url": "https://github.com/ros2/rosbag2.git",
+      "humble_release": "0.15.17-1"
+    },
+    "rosbag2_storage": {
+      "repository": "rosbag2",
+      "url": "https://github.com/ros2/rosbag2.git",
+      "humble_release": "0.15.17-1"
+    },
+    "rosbag2_storage_default_plugins": {
+      "repository": "rosbag2",
+      "url": "https://github.com/ros2/rosbag2.git",
+      "humble_release": "0.15.17-1"
+    },
+    "rosbag2_storage_mcap": {
+      "repository": "rosbag2",
+      "url": "https://github.com/ros2/rosbag2.git",
+      "humble_release": "0.15.17-1"
+    },
+    "rosbag2_storage_mcap_testdata": {
+      "repository": "rosbag2",
+      "url": "https://github.com/ros2/rosbag2.git",
+      "humble_release": "0.15.17-1"
+    },
+    "rosbag2_test_common": {
+      "repository": "rosbag2",
+      "url": "https://github.com/ros2/rosbag2.git",
+      "humble_release": "0.15.17-1"
+    },
+    "rosbag2_tests": {
+      "repository": "rosbag2",
+      "url": "https://github.com/ros2/rosbag2.git",
+      "humble_release": "0.15.17-1"
+    },
+    "rosbag2_transport": {
+      "repository": "rosbag2",
+      "url": "https://github.com/ros2/rosbag2.git",
+      "humble_release": "0.15.17-1"
+    },
+    "rosgraph_msgs": {
+      "repository": "rcl_interfaces",
+      "url": "https://github.com/ros2/rcl_interfaces.git",
+      "humble_release": "1.2.3-1"
+    },
+    "rosidl_adapter": {
+      "repository": "rosidl",
+      "url": "https://github.com/ros2/rosidl.git",
+      "humble_release": "3.1.10-1"
+    },
+    "rosidl_cli": {
+      "repository": "rosidl",
+      "url": "https://github.com/ros2/rosidl.git",
+      "humble_release": "3.1.10-1"
+    },
+    "rosidl_cmake": {
+      "repository": "rosidl",
+      "url": "https://github.com/ros2/rosidl.git",
+      "humble_release": "3.1.10-1"
+    },
+    "rosidl_default_generators": {
+      "repository": "rosidl_defaults",
+      "url": "https://github.com/ros2/rosidl_defaults.git",
+      "humble_release": "1.2.1-1"
+    },
+    "rosidl_default_runtime": {
+      "repository": "rosidl_defaults",
+      "url": "https://github.com/ros2/rosidl_defaults.git",
+      "humble_release": "1.2.1-1"
+    },
+    "rosidl_generator_c": {
+      "repository": "rosidl",
+      "url": "https://github.com/ros2/rosidl.git",
+      "humble_release": "3.1.10-1"
+    },
+    "rosidl_generator_cpp": {
+      "repository": "rosidl",
+      "url": "https://github.com/ros2/rosidl.git",
+      "humble_release": "3.1.10-1"
+    },
+    "rosidl_generator_dds_idl": {
+      "repository": "rosidl_dds",
+      "url": "https://github.com/ros2/rosidl_dds.git",
+      "humble_release": "0.8.1-2"
+    },
+    "rosidl_generator_py": {
+      "repository": "rosidl_python",
+      "url": "https://github.com/ros2/rosidl_python.git",
+      "humble_release": "0.14.6-1"
+    },
+    "rosidl_generator_rs": {
+      "repository": "rosidl_rust",
+      "url": "https://github.com/ros2-rust/rosidl_rust.git",
+      "humble_release": "0.5.0-1"
+    },
+    "rosidl_parser": {
+      "repository": "rosidl",
+      "url": "https://github.com/ros2/rosidl.git",
+      "humble_release": "3.1.10-1"
+    },
+    "rosidl_runtime_c": {
+      "repository": "rosidl",
+      "url": "https://github.com/ros2/rosidl.git",
+      "humble_release": "3.1.10-1"
+    },
+    "rosidl_runtime_cpp": {
+      "repository": "rosidl",
+      "url": "https://github.com/ros2/rosidl.git",
+      "humble_release": "3.1.10-1"
+    },
+    "rosidl_runtime_py": {
+      "repository": "rosidl_runtime_py",
+      "url": "https://github.com/ros2/rosidl_runtime_py.git",
+      "humble_release": "0.9.4-1"
+    },
+    "rosidl_typesupport_c": {
+      "repository": "rosidl_typesupport",
+      "url": "https://github.com/ros2/rosidl_typesupport.git",
+      "humble_release": "2.0.2-1"
+    },
+    "rosidl_typesupport_cpp": {
+      "repository": "rosidl_typesupport",
+      "url": "https://github.com/ros2/rosidl_typesupport.git",
+      "humble_release": "2.0.2-1"
+    },
+    "rosidl_typesupport_fastrtps_c": {
+      "repository": "rosidl_typesupport_fastrtps",
+      "url": "https://github.com/ros2/rosidl_typesupport_fastrtps.git",
+      "humble_release": "2.2.4-1"
+    },
+    "rosidl_typesupport_fastrtps_cpp": {
+      "repository": "rosidl_typesupport_fastrtps",
+      "url": "https://github.com/ros2/rosidl_typesupport_fastrtps.git",
+      "humble_release": "2.2.4-1"
+    },
+    "rosidl_typesupport_interface": {
+      "repository": "rosidl",
+      "url": "https://github.com/ros2/rosidl.git",
+      "humble_release": "3.1.10-1"
+    },
+    "rosidl_typesupport_introspection_c": {
+      "repository": "rosidl",
+      "url": "https://github.com/ros2/rosidl.git",
+      "humble_release": "3.1.10-1"
+    },
+    "rosidl_typesupport_introspection_cpp": {
+      "repository": "rosidl",
+      "url": "https://github.com/ros2/rosidl.git",
+      "humble_release": "3.1.10-1"
+    },
+    "rpyutils": {
+      "repository": "rpyutils",
+      "url": "https://github.com/ros2/rpyutils.git",
+      "humble_release": "0.2.2-1"
+    },
+    "rqt": {
+      "repository": "rqt",
+      "url": "https://github.com/ros-visualization/rqt.git",
+      "humble_release": "1.1.10-2"
+    },
+    "rqt_action": {
+      "repository": "rqt_action",
+      "url": "https://github.com/ros-visualization/rqt_action.git",
+      "humble_release": "2.0.1-3"
+    },
+    "rqt_bag": {
+      "repository": "rqt_bag",
+      "url": "https://github.com/ros-visualization/rqt_bag.git",
+      "humble_release": "1.1.6-1"
+    },
+    "rqt_bag_plugins": {
+      "repository": "rqt_bag",
+      "url": "https://github.com/ros-visualization/rqt_bag.git",
+      "humble_release": "1.1.6-1"
+    },
+    "rqt_console": {
+      "repository": "rqt_console",
+      "url": "https://github.com/ros-visualization/rqt_console.git",
+      "humble_release": "2.0.3-1"
+    },
+    "rqt_controller_manager": {
+      "repository": "ros2_control",
+      "url": "https://github.com/ros-controls/ros2_control.git",
+      "humble_release": "2.54.4-1"
+    },
+    "rqt_graph": {
+      "repository": "rqt_graph",
+      "url": "https://github.com/ros-visualization/rqt_graph.git",
+      "humble_release": "1.3.2-1"
+    },
+    "rqt_gui": {
+      "repository": "rqt",
+      "url": "https://github.com/ros-visualization/rqt.git",
+      "humble_release": "1.1.10-2"
+    },
+    "rqt_gui_cpp": {
+      "repository": "rqt",
+      "url": "https://github.com/ros-visualization/rqt.git",
+      "humble_release": "1.1.10-2"
+    },
+    "rqt_gui_py": {
+      "repository": "rqt",
+      "url": "https://github.com/ros-visualization/rqt.git",
+      "humble_release": "1.1.10-2"
+    },
+    "rqt_joint_trajectory_controller": {
+      "repository": "ros2_controllers",
+      "url": "https://github.com/ros-controls/ros2_controllers.git",
+      "humble_release": "2.54.1-1"
+    },
+    "rqt_msg": {
+      "repository": "rqt_msg",
+      "url": "https://github.com/ros-visualization/rqt_msg.git",
+      "humble_release": "1.2.1-1"
+    },
+    "rqt_plot": {
+      "repository": "rqt_plot",
+      "url": "https://github.com/ros-visualization/rqt_plot.git",
+      "humble_release": "1.1.5-1"
+    },
+    "rqt_publisher": {
+      "repository": "rqt_publisher",
+      "url": "https://github.com/ros-visualization/rqt_publisher.git",
+      "humble_release": "1.5.0-1"
+    },
+    "rqt_py_common": {
+      "repository": "rqt",
+      "url": "https://github.com/ros-visualization/rqt.git",
+      "humble_release": "1.1.10-2"
+    },
+    "rqt_py_console": {
+      "repository": "rqt_py_console",
+      "url": "https://github.com/ros-visualization/rqt_py_console.git",
+      "humble_release": "1.0.2-3"
+    },
+    "rqt_reconfigure": {
+      "repository": "rqt_reconfigure",
+      "url": "https://github.com/ros-visualization/rqt_reconfigure.git",
+      "humble_release": "1.1.4-1"
+    },
+    "rqt_service_caller": {
+      "repository": "rqt_service_caller",
+      "url": "https://github.com/ros-visualization/rqt_service_caller.git",
+      "humble_release": "1.0.5-3"
+    },
+    "rqt_shell": {
+      "repository": "rqt_shell",
+      "url": "https://github.com/ros-visualization/rqt_shell.git",
+      "humble_release": "1.0.2-3"
+    },
+    "rqt_srv": {
+      "repository": "rqt_srv",
+      "url": "https://github.com/ros-visualization/rqt_srv.git",
+      "humble_release": "1.0.3-3"
+    },
+    "rqt_topic": {
+      "repository": "rqt_topic",
+      "url": "https://github.com/ros-visualization/rqt_topic.git",
+      "humble_release": "1.5.1-1"
+    },
+    "rti_connext_dds_cmake_module": {
+      "repository": "rmw_connextdds",
+      "url": "https://github.com/ros2/rmw_connextdds.git",
+      "humble_release": "0.11.6-1"
+    },
+    "rttest": {
+      "repository": "realtime_support",
+      "url": "https://github.com/ros2/realtime_support.git",
+      "humble_release": "0.13.0-2"
+    },
+    "rviz2": {
+      "repository": "rviz",
+      "url": "https://github.com/ros2/rviz.git",
+      "humble_release": "11.2.29-1"
+    },
+    "rviz_assimp_vendor": {
+      "repository": "rviz",
+      "url": "https://github.com/ros2/rviz.git",
+      "humble_release": "11.2.29-1"
+    },
+    "rviz_common": {
+      "repository": "rviz",
+      "url": "https://github.com/ros2/rviz.git",
+      "humble_release": "11.2.29-1"
+    },
+    "rviz_default_plugins": {
+      "repository": "rviz",
+      "url": "https://github.com/ros2/rviz.git",
+      "humble_release": "11.2.29-1"
+    },
+    "rviz_ogre_vendor": {
+      "repository": "rviz",
+      "url": "https://github.com/ros2/rviz.git",
+      "humble_release": "11.2.29-1"
+    },
+    "rviz_rendering": {
+      "repository": "rviz",
+      "url": "https://github.com/ros2/rviz.git",
+      "humble_release": "11.2.29-1"
+    },
+    "rviz_rendering_tests": {
+      "repository": "rviz",
+      "url": "https://github.com/ros2/rviz.git",
+      "humble_release": "11.2.29-1"
+    },
+    "rviz_visual_testing_framework": {
+      "repository": "rviz",
+      "url": "https://github.com/ros2/rviz.git",
+      "humble_release": "11.2.29-1"
+    },
+    "sdl2_vendor": {
+      "repository": "joystick_drivers",
+      "url": "https://github.com/ros-drivers/joystick_drivers.git",
+      "humble_release": "3.3.0-1"
+    },
+    "self_test": {
+      "repository": "diagnostics",
+      "url": "https://github.com/ros/diagnostics.git",
+      "humble_release": "4.0.7-1"
+    },
+    "sensor_msgs": {
+      "repository": "common_interfaces",
+      "url": "https://github.com/ros2/common_interfaces.git",
+      "humble_release": "4.9.2-1"
+    },
+    "sensor_msgs_py": {
+      "repository": "common_interfaces",
+      "url": "https://github.com/ros2/common_interfaces.git",
+      "humble_release": "4.9.2-1"
+    },
+    "shape_msgs": {
+      "repository": "common_interfaces",
+      "url": "https://github.com/ros2/common_interfaces.git",
+      "humble_release": "4.9.2-1"
+    },
+    "shared_queues_vendor": {
+      "repository": "rosbag2",
+      "url": "https://github.com/ros2/rosbag2.git",
+      "humble_release": "0.15.17-1"
+    },
+    "spacenav": {
+      "repository": "joystick_drivers",
+      "url": "https://github.com/ros-drivers/joystick_drivers.git",
+      "humble_release": "3.3.0-1"
+    },
+    "spdlog_vendor": {
+      "repository": "spdlog_vendor",
+      "url": "https://github.com/ros2/spdlog_vendor.git",
+      "humble_release": "1.3.1-1"
+    },
+    "sqlite3_vendor": {
+      "repository": "rosbag2",
+      "url": "https://github.com/ros2/rosbag2.git",
+      "humble_release": "0.15.17-1"
+    },
+    "sros2": {
+      "repository": "sros2",
+      "url": "https://github.com/ros2/sros2.git",
+      "humble_release": "0.10.9-1"
+    },
+    "sros2_cmake": {
+      "repository": "sros2",
+      "url": "https://github.com/ros2/sros2.git",
+      "humble_release": "0.10.9-1"
+    },
+    "statistics_msgs": {
+      "repository": "rcl_interfaces",
+      "url": "https://github.com/ros2/rcl_interfaces.git",
+      "humble_release": "1.2.3-1"
+    },
+    "std_msgs": {
+      "repository": "common_interfaces",
+      "url": "https://github.com/ros2/common_interfaces.git",
+      "humble_release": "4.9.2-1"
+    },
+    "std_srvs": {
+      "repository": "common_interfaces",
+      "url": "https://github.com/ros2/common_interfaces.git",
+      "humble_release": "4.9.2-1"
+    },
+    "steering_controllers_library": {
+      "repository": "ros2_controllers",
+      "url": "https://github.com/ros-controls/ros2_controllers.git",
+      "humble_release": "2.54.1-1"
+    },
+    "stereo_msgs": {
+      "repository": "common_interfaces",
+      "url": "https://github.com/ros2/common_interfaces.git",
+      "humble_release": "4.9.2-1"
+    },
+    "tango_icons_vendor": {
+      "repository": "tango_icons_vendor",
+      "url": "https://github.com/ros-visualization/tango_icons_vendor.git",
+      "humble_release": "0.1.1-3"
+    },
+    "tcb_span": {
+      "repository": "cpp_polyfills",
+      "url": "https://github.com/PickNikRobotics/cpp_polyfills.git",
+      "humble_release": "1.3.2-1"
+    },
+    "teleop_tools": {
+      "repository": "teleop_tools",
+      "url": "https://github.com/ros-teleop/teleop_tools.git",
+      "humble_release": "1.7.0-1"
+    },
+    "teleop_tools_msgs": {
+      "repository": "teleop_tools",
+      "url": "https://github.com/ros-teleop/teleop_tools.git",
+      "humble_release": "1.7.0-1"
+    },
+    "test_interface_files": {
+      "repository": "test_interface_files",
+      "url": "https://github.com/ros2/test_interface_files.git",
+      "humble_release": "0.9.1-2"
+    },
+    "test_msgs": {
+      "repository": "rcl_interfaces",
+      "url": "https://github.com/ros2/rcl_interfaces.git",
+      "humble_release": "1.2.3-1"
+    },
+    "tf2": {
+      "repository": "geometry2",
+      "url": "https://github.com/ros2/geometry2.git",
+      "humble_release": "0.25.24-1"
+    },
+    "tf2_bullet": {
+      "repository": "geometry2",
+      "url": "https://github.com/ros2/geometry2.git",
+      "humble_release": "0.25.24-1"
+    },
+    "tf2_eigen": {
+      "repository": "geometry2",
+      "url": "https://github.com/ros2/geometry2.git",
+      "humble_release": "0.25.24-1"
+    },
+    "tf2_eigen_kdl": {
+      "repository": "geometry2",
+      "url": "https://github.com/ros2/geometry2.git",
+      "humble_release": "0.25.24-1"
+    },
+    "tf2_geometry_msgs": {
+      "repository": "geometry2",
+      "url": "https://github.com/ros2/geometry2.git",
+      "humble_release": "0.25.24-1"
+    },
+    "tf2_kdl": {
+      "repository": "geometry2",
+      "url": "https://github.com/ros2/geometry2.git",
+      "humble_release": "0.25.24-1"
+    },
+    "tf2_msgs": {
+      "repository": "geometry2",
+      "url": "https://github.com/ros2/geometry2.git",
+      "humble_release": "0.25.24-1"
+    },
+    "tf2_py": {
+      "repository": "geometry2",
+      "url": "https://github.com/ros2/geometry2.git",
+      "humble_release": "0.25.24-1"
+    },
+    "tf2_ros": {
+      "repository": "geometry2",
+      "url": "https://github.com/ros2/geometry2.git",
+      "humble_release": "0.25.24-1"
+    },
+    "tf2_ros_py": {
+      "repository": "geometry2",
+      "url": "https://github.com/ros2/geometry2.git",
+      "humble_release": "0.25.24-1"
+    },
+    "tf2_sensor_msgs": {
+      "repository": "geometry2",
+      "url": "https://github.com/ros2/geometry2.git",
+      "humble_release": "0.25.24-1"
+    },
+    "tf2_tools": {
+      "repository": "geometry2",
+      "url": "https://github.com/ros2/geometry2.git",
+      "humble_release": "0.25.24-1"
+    },
+    "tinyxml2_vendor": {
+      "repository": "tinyxml2_vendor",
+      "url": "https://github.com/ros2/tinyxml2_vendor.git",
+      "humble_release": "0.7.7-1"
+    },
+    "tinyxml_vendor": {
+      "repository": "tinyxml_vendor",
+      "url": "https://github.com/ros2/tinyxml_vendor.git",
+      "humble_release": "0.8.3-2"
+    },
+    "tl_expected": {
+      "repository": "cpp_polyfills",
+      "url": "https://github.com/PickNikRobotics/cpp_polyfills.git",
+      "humble_release": "1.3.2-1"
+    },
+    "tlsf": {
+      "repository": "tlsf",
+      "url": "https://github.com/ros2/tlsf.git",
+      "humble_release": "0.7.0-2"
+    },
+    "tlsf_cpp": {
+      "repository": "realtime_support",
+      "url": "https://github.com/ros2/realtime_support.git",
+      "humble_release": "0.13.0-2"
+    },
+    "topic_monitor": {
+      "repository": "demos",
+      "url": "https://github.com/ros2/demos.git",
+      "humble_release": "0.20.10-1"
+    },
+    "topic_statistics_demo": {
+      "repository": "demos",
+      "url": "https://github.com/ros2/demos.git",
+      "humble_release": "0.20.10-1"
+    },
+    "tracetools": {
+      "repository": "ros2_tracing",
+      "url": "https://github.com/ros2/ros2_tracing.git",
+      "humble_release": "4.1.2-1"
+    },
+    "tracetools_launch": {
+      "repository": "ros2_tracing",
+      "url": "https://github.com/ros2/ros2_tracing.git",
+      "humble_release": "4.1.2-1"
+    },
+    "tracetools_read": {
+      "repository": "ros2_tracing",
+      "url": "https://github.com/ros2/ros2_tracing.git",
+      "humble_release": "4.1.2-1"
+    },
+    "tracetools_test": {
+      "repository": "ros2_tracing",
+      "url": "https://github.com/ros2/ros2_tracing.git",
+      "humble_release": "4.1.2-1"
+    },
+    "tracetools_trace": {
+      "repository": "ros2_tracing",
+      "url": "https://github.com/ros2/ros2_tracing.git",
+      "humble_release": "4.1.2-1"
+    },
+    "trajectory_msgs": {
+      "repository": "common_interfaces",
+      "url": "https://github.com/ros2/common_interfaces.git",
+      "humble_release": "4.9.2-1"
+    },
+    "transmission_interface": {
+      "repository": "ros2_control",
+      "url": "https://github.com/ros-controls/ros2_control.git",
+      "humble_release": "2.54.4-1"
+    },
+    "tricycle_controller": {
+      "repository": "ros2_controllers",
+      "url": "https://github.com/ros-controls/ros2_controllers.git",
+      "humble_release": "2.54.1-1"
+    },
+    "tricycle_steering_controller": {
+      "repository": "ros2_controllers",
+      "url": "https://github.com/ros-controls/ros2_controllers.git",
+      "humble_release": "2.54.1-1"
+    },
+    "turtlesim": {
+      "repository": "ros_tutorials",
+      "url": "https://github.com/ros/ros_tutorials.git",
+      "humble_release": "1.4.3-1"
+    },
+    "uncrustify_vendor": {
+      "repository": "uncrustify_vendor",
+      "url": "https://github.com/ament/uncrustify_vendor.git",
+      "humble_release": "2.0.2-2"
+    },
+    "unique_identifier_msgs": {
+      "repository": "unique_identifier_msgs",
+      "url": "https://github.com/ros2/unique_identifier_msgs.git",
+      "humble_release": "2.2.1-3"
+    },
+    "urdf": {
+      "repository": "urdf",
+      "url": "https://github.com/ros2/urdf.git",
+      "humble_release": "2.6.1-1"
+    },
+    "urdf_parser_plugin": {
+      "repository": "urdf",
+      "url": "https://github.com/ros2/urdf.git",
+      "humble_release": "2.6.1-1"
+    },
+    "velocity_controllers": {
+      "repository": "ros2_controllers",
+      "url": "https://github.com/ros-controls/ros2_controllers.git",
+      "humble_release": "2.54.1-1"
+    },
+    "visualization_msgs": {
+      "repository": "common_interfaces",
+      "url": "https://github.com/ros2/common_interfaces.git",
+      "humble_release": "4.9.2-1"
+    },
+    "wiimote": {
+      "repository": "joystick_drivers",
+      "url": "https://github.com/ros-drivers/joystick_drivers.git",
+      "humble_release": "3.3.0-1"
+    },
+    "wiimote_msgs": {
+      "repository": "joystick_drivers",
+      "url": "https://github.com/ros-drivers/joystick_drivers.git",
+      "humble_release": "3.3.0-1"
+    },
+    "xacro": {
+      "repository": "xacro",
+      "url": "https://github.com/ros/xacro.git",
+      "humble_release": "2.1.1-1"
+    },
+    "yaml_cpp_vendor": {
+      "repository": "yaml_cpp_vendor",
+      "url": "https://github.com/ros2/yaml_cpp_vendor.git",
+      "humble_release": "8.0.2-1"
+    },
+    "zstd_vendor": {
+      "repository": "rosbag2",
+      "url": "https://github.com/ros2/rosbag2.git",
+      "humble_release": "0.15.17-1"
+    }
+  }
+}

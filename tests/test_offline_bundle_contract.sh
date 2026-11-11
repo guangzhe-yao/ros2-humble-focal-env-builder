@@ -34,6 +34,7 @@ reject prepare_bundle_root
 [[ "$(<"$BUNDLE_ROOT/sentinel")" == preserve ]]
 ln -s reviewed.tar.gz "$OUT_DIR/ros2-humble-focal-offline-bundle_latest_amd64.tar.gz"
 make_tarball
+[[ "$(stat -c %a "$BUNDLE_ROOT.tar.gz")" == 644 ]]
 (cd "$OUT_DIR" && sha256sum -c "$BUNDLE_NAME.tar.gz.sha256")
 reject make_tarball
 [[ "$(readlink "$OUT_DIR/ros2-humble-focal-offline-bundle_latest_amd64.tar.gz")" == reviewed.tar.gz ]]

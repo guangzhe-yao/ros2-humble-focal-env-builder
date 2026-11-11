@@ -3,6 +3,10 @@
 # Prefer pinning version fields to commit SHAs before release builds. Branch names
 # are convenient while evaluating a package set, but they make rebuilds drift.
 repositories:
+  teleop_tools:
+    type: git
+    url: https://github.com/ros-teleop/teleop_tools.git
+    version: ac63b92477232d8fd73fa9db938ead6735c31971
   ackermann_msgs:
     type: git
     url: https://github.com/ros-drivers/ackermann_msgs.git

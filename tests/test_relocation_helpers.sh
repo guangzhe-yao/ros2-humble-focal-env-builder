@@ -38,8 +38,22 @@ if command -v patchelf >/dev/null 2>&1; then
     echo "RPATH relocation failed: $actual_rpath" >&2
     exit 1
   fi
+  SRC_PREFIX=/work/clean-prefix BUILD_BASE=/work/clean-build
+  patchelf --set-rpath '/work/clean-prefix/lib:/work/clean-build/pkg:$ORIGIN' "$tmp_dir/test-elf"
+  rewrite_one_rpath "$tmp_dir/test-elf"
+  [[ "$(patchelf --print-rpath "$tmp_dir/test-elf")" == '/opt/ros/humble/lib:$ORIGIN' ]]
 else
   echo 'SKIP: ELF RPATH case requires patchelf; prefix normalization was tested.'
+fi
+
+mkdir -p "$STAGED_PREFIX/lib" "$BUILD_DIR"
+cp /bin/true "$STAGED_PREFIX/lib/dependency-probe"
+if (
+  ldd() { echo 'libmissing.so => not found'; }
+  scan_runtime_deps
+); then
+  echo 'Unresolved ELF dependency was silently accepted' >&2
+  exit 1
 fi
 
 echo "Relocation helper test passed."

@@ -1,0 +1,16 @@
+{
+  "catkin": {"ros2": ["ament_cmake", "ament_cmake_python"], "note": "Convert package.xml and CMakeLists.txt; ament_python is a build type, not an installable ROS package."},
+  "roscpp": {"ros2": ["rclcpp"], "note": "Port node, publisher, subscriber and parameter APIs."},
+  "rospy": {"ros2": ["rclpy"], "note": "Port Python node APIs; use the target Python 3.8 interpreter."},
+  "roslaunch": {"ros2": ["launch", "launch_ros", "launch_xml"], "note": "Rewrite ROS 1 launch syntax and node executable names."},
+  "rviz": {"ros2": ["rviz2"], "note": "Port RViz configuration and custom plugins."},
+  "rosbag": {"ros2": ["rosbag2"], "note": "Use ros2 bag; ROS 1 bag format is not the default ROS 2 format."},
+  "actionlib": {"ros2": ["rclcpp_action", "rclpy"], "note": "Use ROS 2 action APIs; not a source-compatible replacement."},
+  "actionlib_msgs": {"ros2": ["action_msgs", "unique_identifier_msgs"], "note": "Redesign ROS 1 action status/id use; do not blindly rename message types."},
+  "message_generation": {"ros2": ["rosidl_default_generators"], "note": "Use rosidl_generate_interfaces for project-owned messages."},
+  "message_runtime": {"ros2": ["rosidl_default_runtime"], "note": "Declare interface runtime dependencies in package.xml."},
+  "tf": {"ros2": ["tf2", "tf2_ros", "tf2_geometry_msgs"], "note": "Port to tf2 buffer/listener/broadcaster APIs."},
+  "nodelet": {"ros2": ["rclcpp_components"], "note": "Convert nodelets to composable nodes."},
+  "gazebo_ros_control": {"ros2": ["gazebo_ros2_control"], "note": "Optional simulation, not the default Pico hardware environment. Port plugins and URDF; Gazebo Classic and newer Gazebo are different targets."},
+  "gazebo": {"ros2": ["gazebo_ros"], "note": "Optional simulation. The simulator is a system dependency, not a ROS package rename."}
+}

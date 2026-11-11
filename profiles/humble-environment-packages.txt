@@ -148,7 +148,9 @@ joint_state_publisher_gui
 joint_trajectory_controller
 joy
 joy_linux
+joy_teleop
 kdl_parser
+key_teleop
 keyboard_handler
 kinematics_interface
 kinematics_interface_kdl
@@ -174,6 +176,7 @@ mcap_vendor
 mecanum_drive_controller
 message_filters
 mimick_vendor
+mouse_teleop
 nav_msgs
 orocos_kdl_vendor
 osrf_pycommon
@@ -343,6 +346,8 @@ steering_controllers_library
 stereo_msgs
 tango_icons_vendor
 tcb_span
+teleop_tools
+teleop_tools_msgs
 test_cli
 test_cli_remapping
 test_communication

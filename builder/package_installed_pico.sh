@@ -15,7 +15,7 @@ bundle_name="ros2-humble-focal-offline-bundle_${BUNDLE_VERSION}_amd64"
 [[ "$BUNDLE_VERSION" =~ ^[a-zA-Z0-9][a-zA-Z0-9._+-]*$ ]] || {
   echo 'BUNDLE_VERSION must not contain paths or whitespace' >&2; exit 1;
 }
-for destination in "$RELEASE_DIR/$bundle_name.tar.gz" "$RELEASE_DIR/$bundle_name.tar.gz.sha256"; do
+for destination in "$RELEASE_DIR/$bundle_name.run" "$RELEASE_DIR/$bundle_name.run.sha256"; do
   [[ ! -e "$destination" && ! -L "$destination" ]] || {
     echo "Refusing to replace candidate: $destination; use a new version" >&2; exit 1;
   }
@@ -49,11 +49,12 @@ fi
 (cd "$OFFLINE_OUT_DIR" && sha256sum -c "$(basename "$checksum")")
 staging="$(mktemp -d "$RELEASE_DIR/.candidate.XXXXXX")"
 trap 'rm -rf "$staging"' EXIT
-cp "$bundle" "$checksum" "$staging/"
+python3 "$REPO_ROOT/builder/package/build_self_extracting.py" "$bundle" "$staging/$bundle_name.run"
+(cd "$staging" && sha256sum "$bundle_name.run" > "$bundle_name.run.sha256")
 # Hard links publish complete files and refuse to replace concurrent outputs.
-ln "$staging/$(basename "$bundle")" "$RELEASE_DIR/$(basename "$bundle")"
-ln "$staging/$(basename "$checksum")" "$RELEASE_DIR/$(basename "$checksum")"
+ln "$staging/$bundle_name.run" "$RELEASE_DIR/$bundle_name.run"
+ln "$staging/$bundle_name.run.sha256" "$RELEASE_DIR/$bundle_name.run.sha256"
 
 printf '\nPico offline candidate is ready (latest unchanged):\n  %s\n  %s\n' \
-  "$RELEASE_DIR/$(basename "$bundle")" \
-  "$RELEASE_DIR/$(basename "$checksum")"
+  "$RELEASE_DIR/$bundle_name.run" \
+  "$RELEASE_DIR/$bundle_name.run.sha256"

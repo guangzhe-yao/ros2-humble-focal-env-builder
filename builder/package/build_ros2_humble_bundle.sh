@@ -40,35 +40,31 @@ require_focal_amd64() {
 }
 
 require_packaging_tools() {
-  if ! command -v patchelf >/dev/null 2>&1; then
-    echo "Missing patchelf. Install it on the packaging machine: sudo apt-get install -y patchelf" >&2
-    exit 1
-  fi
+  local tool
+  for tool in patchelf file rsync readelf dpkg-deb dpkg-query python3; do
+    command -v "$tool" >/dev/null || { echo "Missing packaging tool: $tool" >&2; return 1; }
+  done
 }
 
 prepare_dirs() {
   log "Preparing package root at $PKGROOT"
-  rm -rf "$PKGROOT"
+  [[ ! -e "$BUILD_DIR" && ! -L "$BUILD_DIR" && ! -e "$ARTIFACT_DIR" && ! -L "$ARTIFACT_DIR" ]] || {
+    echo 'Use a fresh OUT_DIR; existing build/artifact directories are never cleared' >&2
+    return 1
+  }
   mkdir -p "$STAGED_PREFIX" "$PKGROOT/DEBIAN" "$ARTIFACT_DIR" "$BUILD_DIR"
-  rm -f \
-    "$ARTIFACT_DIR/${PKG_NAME}_"*"_${PKG_ARCH}.deb" \
-    "$ARTIFACT_DIR/${PKG_NAME}_"*"_${PKG_ARCH}.deb.info" \
-    "$ARTIFACT_DIR/${PKG_NAME}_"*"_${PKG_ARCH}.deb.contents" \
-    "$ARTIFACT_DIR"/ros-humble-package-markers_*"_${PKG_ARCH}.tar.gz"
 }
 
 copy_install_space() {
+  python3 "$(dirname "${BASH_SOURCE[0]}")/validate_environment.py" "$SRC_PREFIX" \
+    --allowlist "$(dirname "${BASH_SOURCE[0]}")/../../profiles/humble-environment-packages.txt" \
+    --required "$(dirname "${BASH_SOURCE[0]}")/../../profiles/pico-ros-packages.txt" \
+    --excluded "$(dirname "${BASH_SOURCE[0]}")/../../profiles/excluded-components.txt"
   log "Copying ROS 2 install space with symlinks expanded"
   rsync -aL --delete \
     --exclude '__pycache__/' \
     --exclude '*.pyc' \
     "$SRC_PREFIX/" "$STAGED_PREFIX/"
-
-  # Business interfaces must be owned by their own DEBs, not the ROS underlay.
-  python3 "$(dirname "${BASH_SOURCE[0]}")/prune_business_packages.py" \
-    "$STAGED_PREFIX" navi_robot_msgs robot_nodes_py \
-    --allowlist "$(dirname "${BASH_SOURCE[0]}")/../../profiles/humble-environment-packages.txt" \
-    > "$ARTIFACT_DIR/excluded-business-files.txt"
 
   mkdir -p "$STAGED_PREFIX/share/ros2_humble_source_build"
   cat > "$STAGED_PREFIX/share/ros2_humble_source_build/BUILD_INFO" <<EOF
@@ -268,6 +264,12 @@ rewrite_one_rpath() {
         suffix="${entry#"$BUILD_BASE/rviz_assimp_vendor/assimp_install"}"
         mapped="$INSTALL_PREFIX/opt/rviz_assimp_vendor$suffix"
         ;;
+      "$SRC_PREFIX"|"$SRC_PREFIX"/*)
+        mapped="$INSTALL_PREFIX${entry#"$SRC_PREFIX"}"
+        ;;
+      "$BUILD_BASE"|"$BUILD_BASE"/*)
+        continue
+        ;;
       */install_deploy)
         mapped="$INSTALL_PREFIX"
         ;;
@@ -357,84 +359,10 @@ relocate_install_space() {
 }
 
 write_manual_deps() {
-  cat > "$MANUAL_DEPS_FILE" <<'EOF'
-bash
-bash-completion
-ca-certificates
-curl
-dbus-user-session
-libacl1
-libassimp5
-libcwiid1
-libfreeimage3
-libignition-math6
-libilmbase24
-libopencv-core4.2
-libopencv-highgui4.2
-libopencv-imgcodecs4.2
-libopencv-imgproc4.2
-libopencv-videoio4.2
-libopenexr24
-libpython3.8
-libpyside2-py3-5.14
-libqt5core5a
-libqt5gui5
-libqt5opengl5
-libqt5svg5
-libqt5widgets5
-libsdl2-2.0-0
-libshiboken2-py3-5.14
-libspdlog1
-libspnav0
-libyaml-cpp0.6
-python3
-python3-argcomplete
-python3-catkin-pkg
-python3-empy
-python3-importlib-metadata
-python3-lark
-python3-netifaces
-python3-numpy
-python3-packaging
-python3-pkg-resources
-python3-psutil
-python3-pygraphviz
-python3-yaml
-EOF
-
-  cat > "$DEV_DEPS_FILE" <<'EOF'
-build-essential
-cmake
-git
-mawk
-libasio-dev
-libboost-filesystem-dev
-libboost-regex-dev
-libboost-serialization-dev
-libboost-thread-dev
-libconsole-bridge-dev
-libeigen3-dev
-libfmt-dev
-libgoogle-glog-dev
-libgtest-dev
-libgmock-dev
-libhdf5-dev
-libnl-3-dev
-libspdlog-dev
-libssl-dev
-libtinyxml-dev
-libtinyxml2-dev
-liburdfdom-dev
-liburdfdom-headers-dev
-libyaml-cpp-dev
-libzmq3-dev
-pkg-config
-python3-colcon-common-extensions
-python3-dev
-python3-pip
-python3-vcstool
-python3-venv
-EOF
+  local profiles
+  profiles="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../profiles" && pwd)"
+  sed -e 's/#.*$//' -e '/^[[:space:]]*$/d' "$profiles/apt-runtime.txt" > "$MANUAL_DEPS_FILE"
+  sed -e 's/#.*$//' -e '/^[[:space:]]*$/d' "$profiles/apt-development.txt" > "$DEV_DEPS_FILE"
 }
 
 scan_runtime_deps() {
@@ -449,14 +377,19 @@ scan_runtime_deps() {
     | awk -F: '/ELF/ {print $1}' \
     | sort -u > "$elf_list"
 
+  local library_path linked
+  library_path="$(find "$STAGED_PREFIX" -type d \( -name lib -o -path '*/lib/*' \) -print | paste -sd: -)"
   : > "$libs_list"
   while IFS= read -r elf; do
-    LD_LIBRARY_PATH="$(find "$STAGED_PREFIX" -type d \( -name lib -o -path '*/lib/*' \) -print | paste -sd: -)" \
-      ldd "$elf" 2>/dev/null \
-      | awk '
+    linked="$(LD_LIBRARY_PATH="$library_path" ldd "$elf" 2>/dev/null || true)"
+    if [[ "$linked" == *'not found'* ]]; then
+      printf 'Unresolved ELF dependency in %s:\n%s\n' "$elf" "$linked" >&2
+      return 1
+    fi
+    printf '%s\n' "$linked" | awk '
           /=> \// {print $(NF-1)}
           /^[[:space:]]*\// {print $1}
-        ' >> "$libs_list" || true
+        ' >> "$libs_list"
   done < "$elf_list"
 
   sort -u "$libs_list" \

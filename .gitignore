@@ -7,6 +7,8 @@ artifacts/
 *.deb.contents
 *.deb.info
 *.tar.gz
+*.run
+*.run.sha256
 release/pico/*.tar.gz.sha256
 release/pico/ros2-humble-focal-offline-bundle_*_amd64/
 release/pico/robot-humble-focal-offline-*-amd64/

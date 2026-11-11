@@ -1,0 +1,7 @@
+# Business/vendor path components, including leftovers without ament markers.
+zj_humanoid
+navi_robot_msgs
+robot_nodes_py
+rtipc_runtime
+uplimb_runtime
+xenomai
